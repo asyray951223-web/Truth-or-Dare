@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>真心話大冒險轉盤</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Microsoft JhengHei", Arial, sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        width: 100%;
+        text-align: center;
+      }
+
+      header {
+        margin-bottom: 30px;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .description {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 20px;
+      }
+
+      .game-area {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+
+      .wheel-container {
+        position: relative;
+        width: 300px;
+        height: 300px;
+      }
+
+      .wheel {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(
+          #ff5252 0% 25%,
+          #ff9800 25% 50%,
+          #4caf50 50% 75%,
+          #2196f3 75% 100%
+        );
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        transition: transform 4s cubic-bezier(0.2, 0.8, 0.3, 1);
+      }
+
+      .wheel-section {
+        position: absolute;
+        width: 50%;
+        height: 50%;
+        transform-origin: bottom right;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .wheel-text {
+        transform: rotate(45deg);
+        font-weight: bold;
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        font-size: 16px;
+      }
+
+      .pointer {
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 30px;
+        height: 40px;
+        background-color: #333;
+        clip-path: polygon(50% 100%, 0 0, 100% 0);
+        z-index: 10;
+      }
+
+      .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 300px;
+      }
+
+      button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 50px;
+        background: #ffc107;
+        color: #333;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      button:hover {
+        background: #ffd54f;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      #spin-btn {
+        background: #e91e63;
+        color: white;
+        font-size: 1.3rem;
+        padding: 15px;
+      }
+
+      #result {
+        margin-top: 20px;
+        font-size: 1.5rem;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .customization {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 20px;
+        width: 100%;
+      }
+
+      .customization h2 {
+        margin-bottom: 15px;
+      }
+
+      .input-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      input {
+        flex: 1;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 50px;
+        font-size: 1rem;
+      }
+
+      .category-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        justify-content: center;
+      }
+
+      .category-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+      }
+
+      .category-btn.active {
+        background: #4caf50;
+      }
+
+      .questions-list {
+        text-align: left;
+        max-height: 200px;
+        overflow-y: auto;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        padding: 10px;
+      }
+
+      .question-item {
+        padding: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .remove-btn {
+        background: transparent;
+        color: #ff5252;
+        padding: 2px 8px;
+        font-size: 0.9rem;
+        box-shadow: none;
+      }
+
+      footer {
+        margin-top: 30px;
+        font-size: 0.9rem;
+        opacity: 0.7;
+      }
+
+      @media (max-width: 600px) {
+        .game-area {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .wheel-container,
+        .controls {
+          width: 100%;
+          max-width: 300px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>真心話大冒險轉盤</h1>
+        <p class="description">
+          旋轉轉盤，挑戰自我！自訂你的真心話與大冒險問題。
+        </p>
+      </header>
+
+      <div class="game-area">
+        <div class="wheel-container">
+          <div class="pointer"></div>
+          <div class="wheel" id="wheel">
+            <!-- 轉盤區域將由JavaScript動態生成 -->
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="spin-btn">開始旋轉！</button>
+          <div id="result">轉盤結果將顯示在這裡</div>
+        </div>
+      </div>
+
+      <div class="customization">
+        <h2>自訂問題</h2>
+
+        <div class="category-selector">
+          <button class="category-btn active" data-category="truth">
+            真心話
+          </button>
+          <button class="category-btn" data-category="dare">大冒險</button>
+        </div>
+
+        <div class="input-group">
+          <input type="text" id="new-question" placeholder="輸入新的問題..." />
+          <button id="add-btn">添加</button>
+        </div>
+
+        <div class="questions-list" id="questions-list">
+          <!-- 問題列表將由JavaScript動態生成 -->
+        </div>
+      </div>
+
+      <footer>
+        <p>設計用於朋友聚會，請確保所有參與者感到舒適與安全</p>
+      </footer>
+    </div>
+
+    <script>
+      // 初始問題庫
+      const defaultQuestions = {
+        truth: [
+          "你最近一次撒謊是什麼時候？",
+          "你曾經暗戀過誰？",
+          "你最大的秘密是什麼？",
+          "你曾經做過最尷尬的事是什麼？",
+        ],
+        dare: [
+          "模仿一位名人直到下一輪",
+          "用奇怪的嗓音說接下來三句話",
+          "在社交媒體上發布一張搞怪自拍",
+          "給通訊錄第10個人打電話說『我愛你』",
+        ],
+      };
+
+      // 當前問題庫
+      let questions = JSON.parse(JSON.stringify(defaultQuestions));
+      let currentCategory = "truth";
+      let isSpinning = false;
+
+      // 初始化轉盤
+      function initWheel() {
+        const wheel = document.getElementById("wheel");
+        wheel.innerHTML = "";
+
+        // 創建轉盤區域
+        const categories = ["真心話", "大冒險", "真心話", "大冒險"];
+        const colors = ["#FF5252", "#FF9800", "#4CAF50", "#2196F3"];
+
+        categories.forEach((category, index) => {
+          const section = document.createElement("div");
+          section.className = "wheel-section";
+          section.style.transform = `rotate(${index * 90}deg)`;
+
+          const text = document.createElement("div");
+          text.className = "wheel-text";
+          text.textContent = category;
+          text.style.color = colors[index];
+
+          section.appendChild(text);
+          wheel.appendChild(section);
+        });
+      }
+
+      // 旋轉轉盤
+      function spinWheel() {
+        if (isSpinning) return;
+
+        isSpinning = true;
+        const wheel = document.getElementById("wheel");
+        const resultDiv = document.getElementById("result");
+
+        // 隨機旋轉角度 (至少旋轉5圈)
+        const degrees = 1800 + Math.floor(Math.random() * 360);
+        wheel.style.transform = `rotate(${degrees}deg)`;
+
+        // 計算結果 (基於旋轉角度)
+        setTimeout(() => {
+          const normalizedDegrees = degrees % 360;
+          let result;
+
+          if (normalizedDegrees < 90) {
+            result = getRandomQuestion("truth");
+          } else if (normalizedDegrees < 180) {
+            result = getRandomQuestion("dare");
+          } else if (normalizedDegrees < 270) {
+            result = getRandomQuestion("truth");
+          } else {
+            result = getRandomQuestion("dare");
+          }
+
+          resultDiv.textContent = result;
+          isSpinning = false;
+        }, 4000);
+      }
+
+      // 獲取隨機問題
+      function getRandomQuestion(category) {
+        const categoryQuestions = questions[category];
+        if (categoryQuestions.length === 0) {
+          return category === "truth"
+            ? "請添加真心話問題！"
+            : "請添加大冒險挑戰！";
+        }
+
+        const randomIndex = Math.floor(
+          Math.random() * categoryQuestions.length
+        );
+        return categoryQuestions[randomIndex];
+      }
+
+      // 更新問題列表顯示
+      function updateQuestionsList() {
+        const questionsList = document.getElementById("questions-list");
+        questionsList.innerHTML = "";
+
+        questions[currentCategory].forEach((question, index) => {
+          const item = document.createElement("div");
+          item.className = "question-item";
+
+          const text = document.createElement("span");
+          text.textContent = question;
+
+          const removeBtn = document.createElement("button");
+          removeBtn.className = "remove-btn";
+          removeBtn.textContent = "×";
+          removeBtn.onclick = () => removeQuestion(index);
+
+          item.appendChild(text);
+          item.appendChild(removeBtn);
+          questionsList.appendChild(item);
+        });
+      }
+
+      // 添加新問題
+      function addQuestion() {
+        const input = document.getElementById("new-question");
+        const text = input.value.trim();
+
+        if (text) {
+          questions[currentCategory].push(text);
+          input.value = "";
+          updateQuestionsList();
+        }
+      }
+
+      // 移除問題
+      function removeQuestion(index) {
+        questions[currentCategory].splice(index, 1);
+        updateQuestionsList();
+      }
+
+      // 切換分類
+      function switchCategory(category) {
+        currentCategory = category;
+
+        // 更新按鈕狀態
+        document.querySelectorAll(".category-btn").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.category === category);
+        });
+
+        updateQuestionsList();
+      }
+
+      // 事件監聽器
+      document.getElementById("spin-btn").addEventListener("click", spinWheel);
+      document.getElementById("add-btn").addEventListener("click", addQuestion);
+
+      document.querySelectorAll(".category-btn").forEach((btn) => {
+        btn.addEventListener("click", () =>
+          switchCategory(btn.dataset.category)
+        );
+      });
+
+      // 初始化
+      initWheel();
+      updateQuestionsList();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+:root {
+  --main-color: #f8be40; /* golden */
+  --primary-dark: #1a1a1a; /* 主要深色 */
+  --secondary-dark: #2d2d2d; /* 次要深色 */
+  --gold: #d4af37; /* 金色主色調 */
+  --light-gold: #f4e4a6; /* 淺金色 */
+  --white: #ffffff; /* 白色文字 */
+  --light-gray: #e0e0e0; /* 淺灰色文字 */
+  --shadow: rgba(0, 0, 0, 0.3); /* 陰影顏色 */
+  --secondary-color: #f0c14b; /* 次要顏色 */
+  --hover-color: #e2b33c; /* 滑鼠懸停顏色 */
+  --border-color: #d6a934; /* 邊框顏色 */
+  --background-color: #fff8e1; /* 背景顏色 */
+  --button-hover: #f7d070; /* 按鈕懸停顏色 */
+  --disabled-color: #c0c0c0; /* 禁用顏色 */
+  --error-color: #ff4d4d; /* 錯誤顏色 */
+  --success-color: #4caf50; /* 成功顏色 */
+  --info-color: #2196f3; /* 信息顏色 */
+}
+
+/*背景暗色調十字星芒星空漸層*/
+body {
+  background: linear-gradient(1000deg, #1a1a1a, #2d2d2d);
+  color: var(--white);
+}

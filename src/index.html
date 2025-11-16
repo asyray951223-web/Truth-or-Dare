@@ -1,138 +1,36 @@
+<!--
+主要面板結構
+HTML包含了5個主要功能面板：
+
+轉盤遊戲 - 核心遊戲界面
+
+玩家管理 - 添加/刪除玩家
+
+問題管理 - 管理真心話和大冒險問題
+
+歷史記錄 - 查看過去的遊戲記錄
+
+遊戲設定 - 自訂遊戲體驗
+-->
 <!DOCTYPE html>
-<!--//
-核心目標: - 創建一個互動式的真心話大冒險轉盤遊戲網頁。
-使用者可以旋轉轉盤來隨機選擇真心話或大冒險挑戰。
-提供自訂問題的功能，讓使用者可以添加或移除真心話和大冒險的問題。
-確保介面友好且響應式設計，適用於各種裝置。
-使用純HTML、CSS和JavaScript實現，無需後端支援。 
-
-技術細節:
-HTML結構包括標題、描述、轉盤區域、控制按鈕和自訂問題區域。
-CSS用於設計轉盤的外觀、動畫效果以及整體頁面的美觀。
-JavaScript負責轉盤的旋轉邏輯、隨機選擇問題以及管理自訂問題的功能
-使用事件監聽器來處理按鈕點擊和用戶互動。
-
-特殊需求:
-轉盤應該有平滑的旋轉動畫效果。 
-自訂問題區域應該允許即時更新問題列表。
-
-
-//-->
-<!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>真心話大冒險轉盤</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>轉盤遊戲</title>
+    <link rel="stylesheet" href="style.min.css" />
   </head>
   <body>
-    <div class="container">
-      <header>
-        <h1>真心話大冒險轉盤</h1>
-        <p class="description">
-          旋轉轉盤，挑戰自我！自訂你的真心話與大冒險問題。
-        </p>
-      </header>
-
-      <div class="wheels-container">
-        <div class="wheel-section">
-          <h2 class="wheel-title">玩家選擇</h2>
-          <div class="wheel-container">
-            <div class="pointer"></div>
-            <div class="wheel" id="player-wheel">
-              <!-- 玩家轉盤區域將由JavaScript動態生成 -->
-            </div>
-          </div>
-          <div class="controls">
-            <button id="spin-player-btn" class="spin-btn">選擇玩家</button>
-            <div id="player-result">玩家結果將顯示在這裡</div>
-          </div>
-        </div>
-
-        <div class="wheel-section">
-          <h2 class="wheel-title">真心話大冒險</h2>
-          <div class="wheel-container">
-            <div class="pointer"></div>
-            <div class="wheel" id="game-wheel">
-              <!-- 遊戲轉盤區域將由JavaScript動態生成 -->
-            </div>
-          </div>
-          <div class="controls">
-            <button id="spin-game-btn" class="spin-btn">開始遊戲</button>
-            <div id="game-result">遊戲結果將顯示在這裡</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="player-management">
-        <h2>玩家管理</h2>
-
-        <div class="input-group">
-          <input type="text" id="new-player" placeholder="輸入玩家名稱..." />
-          <button id="add-player-btn">添加玩家</button>
-        </div>
-
-        <div class="player-list" id="player-list">
-          <!-- 玩家列表將由JavaScript動態生成 -->
-        </div>
-
-        <div class="player-count-controls">
-          <button class="count-btn" id="decrease-count">-</button>
-          <div class="player-count">
-            玩家數量: <span id="player-count">0</span>
-          </div>
-          <button class="count-btn" id="increase-count">+</button>
-        </div>
-
-        <div class="actions">
-          <button id="randomize-players-btn" class="action-btn">
-            隨機玩家
-          </button>
-          <button id="clear-players-btn" class="action-btn">清除玩家</button>
-        </div>
-      </div>
-
-      <div class="customization">
-        <h2>自訂問題</h2>
-
-        <div class="category-selector">
-          <button class="category-btn active" data-category="truth">
-            真心話
-          </button>
-          <button class="category-btn" data-category="dare">大冒險</button>
-        </div>
-
-        <div class="input-group">
-          <input type="text" id="new-question" placeholder="輸入新的問題..." />
-          <button id="add-question-btn">添加</button>
-        </div>
-
-        <div class="questions-list" id="questions-list">
-          <!-- 問題列表將由JavaScript動態生成 -->
-        </div>
-
-        <div class="actions">
-          <button id="randomize-questions-btn" class="action-btn">
-            隨機問題
-          </button>
-          <button id="clear-questions-btn" class="action-btn">清除問題</button>
-        </div>
-      </div>
-
-      <div class="history">
-        <h2>遊戲歷史</h2>
-        <div id="history-list">
-          <!-- 歷史記錄將由JavaScript動態生成 -->
-        </div>
-      </div>
-
-      <footer>
-        <p>設計用於朋友聚會，請確保所有參與者感到舒適與安全</p>
-      </footer>
+    <div id="app">
+      <main-panel></main-panel>
+      <player-management-panel></player-management-panel>
+      <question-management-panel></question-management-panel>
+      <history-records-panel></history-records-panel>
+      <game-settings-panel></game-settings-panel>
     </div>
-
-    <!-- 連結外部JavaScript檔案 -->
-    <script src="script.js"></script>
+    <script src="bundle.min.js"></script>
   </body>
+  <footer>
+    <p>版權所有 &copy; 2024 轉盤遊戲</p>
+  </footer>
 </html>

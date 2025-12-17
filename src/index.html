@@ -1026,7 +1026,7 @@
           <div class="diff-tab" data-val="truth">真心話</div>
           <div class="diff-tab" data-val="dare">大冒險</div>
         </div>
-        <div class="input-group host-only">
+        <div class="input-group">
           <select id="q-type" style="flex: 0.4">
             <option value="truth">真心話</option>
             <option value="dare">大冒險</option>
@@ -1036,9 +1036,24 @@
             <i class="material-icons">add</i>
           </button>
         </div>
-        <div class="input-group input-group--options host-only">
-          <label>難度:</label>
-          <select id="q-difficulty">
+        <div
+          class="input-group input-group--options"
+          style="
+            margin-top: 15px;
+            border-top: 1px solid var(--gold-dark);
+            padding-top: 10px;
+          "
+        >
+          <label
+            ><i
+              class="material-icons"
+              style="font-size: 1rem; vertical-align: middle"
+              >filter_list</i
+            >
+            篩選等級:</label
+          >
+          <select id="list-difficulty-filter">
+            <option value="all">全部顯示</option>
             <option value="Easy">簡單</option>
             <option value="Normal">普通</option>
             <option value="Hard">困難</option>
@@ -1120,9 +1135,10 @@
         <div class="slider-container">
           <label>難度篩選</label>
           <select id="game-difficulty-filter" class="host-control">
-            <option value="Any">任意 (包含所有)</option>
-            <option value="Normal">普通以上 (包含困難與大人)</option>
-            <option value="Hard">刺激模式 (困難與大人)</option>
+            <option value="All">全部 (包含所有)</option>
+            <option value="Safe">闔家咸宜 (簡單+普通)</option>
+            <option value="Standard">標準模式 (不含大人)</option>
+            <option value="Spicy">刺激模式 (困難+大人)</option>
             <option value="Adult">僅限大人 (18+)</option>
           </select>
         </div>
@@ -1359,10 +1375,15 @@
               UIModule.renderPlayerList();
             }
 
-            // Sync Questions (Guest gets questions from Host)
-            if (!this.isHost && val.questions) {
-              DataModule.state.questions = val.questions;
-              UIModule.renderQuestionList(); // Update Guest's view
+            // Sync Questions
+            const serverQuestions = val.questions || [];
+            if (
+              JSON.stringify(DataModule.state.questions) !==
+              JSON.stringify(serverQuestions)
+            ) {
+              DataModule.state.questions = serverQuestions;
+              DataModule.saveToStorage();
+              UIModule.renderQuestionList();
             }
 
             // Sync Settings
@@ -1437,7 +1458,7 @@
           if (this.roomId === "LOCAL" || !this.roomRef) return;
           // Only Host should push most structural changes, but Guests trigger spins via Host or receive updates
           // Here we assume simple trust: whoever changes state pushes it if allowed.
-          if (this.isHost) {
+          if (this.isHost || key === "questions") {
             this.roomRef.update({ [key]: data });
           }
         },
@@ -1868,6 +1889,327 @@
             content: "讓右邊的人在你脖子上種草莓（或假裝用力吸一下）。",
             level: "Adult",
           },
+          // 🟢 New Easy Questions
+          {
+            type: "truth",
+            content: "最喜歡的季節是哪個？為什麼？",
+            level: "Easy",
+          },
+          { type: "truth", content: "你比較喜歡貓還是狗？", level: "Easy" },
+          { type: "truth", content: "早餐通常都吃什麼？", level: "Easy" },
+          {
+            type: "truth",
+            content: "最近看的一本書或漫畫是什麼？",
+            level: "Easy",
+          },
+          { type: "truth", content: "你最喜歡的顏色是什麼？", level: "Easy" },
+          { type: "truth", content: "你相信星座或算命嗎？", level: "Easy" },
+          { type: "truth", content: "喜歡喝咖啡還是茶？", level: "Easy" },
+          {
+            type: "truth",
+            content: "如果可以出國，現在最想去哪裡？",
+            level: "Easy",
+          },
+          {
+            type: "truth",
+            content: "假日通常喜歡做什麼休閒活動？",
+            level: "Easy",
+          },
+          {
+            type: "truth",
+            content: "有沒有收集什麼特別的東西？",
+            level: "Easy",
+          },
+          { type: "truth", content: "最喜歡的水果是什麼？", level: "Easy" },
+          { type: "truth", content: "喜歡爬山還是去海邊？", level: "Easy" },
+          { type: "truth", content: "敢不敢吃榴槤或臭豆腐？", level: "Easy" },
+          {
+            type: "truth",
+            content: "平時喜歡聽什麼類型的音樂？",
+            level: "Easy",
+          },
+          {
+            type: "truth",
+            content: "最近一次去便利商店買了什麼？",
+            level: "Easy",
+          },
+          { type: "dare", content: "做一個最醜的鬼臉。", level: "Easy" },
+          { type: "dare", content: "模仿貓叫三聲「喵喵喵」。", level: "Easy" },
+          { type: "dare", content: "站起來原地轉一圈。", level: "Easy" },
+          { type: "dare", content: "跟左邊的人擊掌。", level: "Easy" },
+          {
+            type: "dare",
+            content: "說一個笑話（不好笑也要笑）。",
+            level: "Easy",
+          },
+          { type: "dare", content: "閉眼單腳站立5秒。", level: "Easy" },
+          { type: "dare", content: "模仿機器人說話一句。", level: "Easy" },
+          { type: "dare", content: "對著空氣揮手說「嗨」。", level: "Easy" },
+          {
+            type: "dare",
+            content: "做出一個驚訝的表情維持5秒。",
+            level: "Easy",
+          },
+          { type: "dare", content: "模仿一種樂器的聲音。", level: "Easy" },
+          // 🟡 New Normal Questions
+          { type: "truth", content: "學生時代曾經作弊過嗎？", level: "Normal" },
+          {
+            type: "truth",
+            content: "上一次生氣是因為什麼事情？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "覺得自己最大的優點是什麼？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "覺得自己最大的缺點是什麼？",
+            level: "Normal",
+          },
+          { type: "truth", content: "曾經對好朋友說過謊嗎？", level: "Normal" },
+          {
+            type: "truth",
+            content: "有沒有暗戀過老師或長輩？",
+            level: "Normal",
+          },
+          { type: "truth", content: "第一次約會去了哪裡？", level: "Normal" },
+          {
+            type: "truth",
+            content: "最討厭的一種食物是什麼？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "曾經在電影院看電影看到睡著過嗎？",
+            level: "Normal",
+          },
+          { type: "truth", content: "敢不敢一個人看恐怖片？", level: "Normal" },
+          {
+            type: "truth",
+            content: "曾經迷路過最久的一次是多久？",
+            level: "Normal",
+          },
+          { type: "truth", content: "小時候最怕什麼東西？", level: "Normal" },
+          {
+            type: "truth",
+            content: "曾經不小心把別人的秘密說出去嗎？",
+            level: "Normal",
+          },
+          { type: "truth", content: "覺得在場誰最幽默好笑？", level: "Normal" },
+          {
+            type: "truth",
+            content: "如果能回到過去，最想回到幾歲？",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "用屁股在空中寫數字「8」。",
+            level: "Normal",
+          },
+          { type: "dare", content: "模仿在場某人的笑聲。", level: "Normal" },
+          {
+            type: "dare",
+            content: "讓右邊的人幫你整理頭髮（或摸頭）。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "對著手機鏡頭深情告白（對象隨意）。",
+            level: "Normal",
+          },
+          { type: "dare", content: "唱一首兒歌的副歌。", level: "Normal" },
+          {
+            type: "dare",
+            content: "用非慣用手寫下自己的名字。",
+            level: "Normal",
+          },
+          { type: "dare", content: "模仿殭屍跳三下。", level: "Normal" },
+          {
+            type: "dare",
+            content: "讓大家看你錢包裡有多少錢。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "隨機念出手機裡的一條簡訊內容。",
+            level: "Normal",
+          },
+          { type: "dare", content: "模仿新聞主播播報氣象。", level: "Normal" },
+          // 🔴 New Hard Questions
+          { type: "truth", content: "曾經背叛過好朋友嗎？", level: "Hard" },
+          {
+            type: "truth",
+            content: "說出一個你從未告訴過別人的秘密。",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "曾經偷過東西嗎（不論大小）？",
+            level: "Hard",
+          },
+          { type: "truth", content: "對在場誰的第一印象最差？", level: "Hard" },
+          {
+            type: "truth",
+            content: "曾經想過要整型嗎？想整哪裡？",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "覺得自己人生中最失敗的一件事？",
+            level: "Hard",
+          },
+          { type: "truth", content: "曾經腳踏兩條船嗎？", level: "Hard" },
+          {
+            type: "truth",
+            content: "討厭在場某人的某個行為嗎？請誠實。",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "曾經偷看過另一半的手機訊息嗎？",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "如果必須殺死一個人才能救自己，你會選誰（假設情境）？",
+            level: "Hard",
+          },
+          { type: "truth", content: "曾經後悔跟某任交往嗎？", level: "Hard" },
+          { type: "truth", content: "覺得自己是不是一個好人？", level: "Hard" },
+          {
+            type: "truth",
+            content: "曾經為了利益出賣過朋友嗎？",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "說出一個你最想刪除的黑歷史。",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "曾經在背後說過在場誰的壞話？",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "打電話給前任（或隨機異性朋友）說「我好想你」。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "讓左邊的人在你的臉上畫一個圖案。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content:
+              "隨機挑選通訊錄的一個人，傳送「我懷孕了/我讓別人懷孕了」。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "讓大家看你手機瀏覽器紀錄的最後一頁。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "模仿一種猥瑣的表情自拍並發到群組。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "跪在地上向在場的一個人求婚。",
+            level: "Hard",
+          },
+          { type: "dare", content: "讓右邊的人聞你的腋下。", level: "Hard" },
+          {
+            type: "dare",
+            content: "喝一杯特調飲料（大家隨意加料）。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "大聲喊出自己最丟臉的綽號。",
+            level: "Hard",
+          },
+          { type: "dare", content: "模仿高潮的表情10秒。", level: "Hard" },
+          // 🔞 New Adult Questions
+          { type: "truth", content: "喜歡什麼體位？", level: "Adult" },
+          { type: "truth", content: "曾經在公共場所做過嗎？", level: "Adult" },
+          {
+            type: "truth",
+            content: "最喜歡身體哪個部位被觸摸？",
+            level: "Adult",
+          },
+          {
+            type: "truth",
+            content: "曾經幻想過跟在場誰發生關係？",
+            level: "Adult",
+          },
+          { type: "truth", content: "接受一夜情嗎？", level: "Adult" },
+          {
+            type: "truth",
+            content: "曾經有過性幻想對象是老師或上司嗎？",
+            level: "Adult",
+          },
+          {
+            type: "truth",
+            content: "喜歡粗暴一點還是溫柔一點？",
+            level: "Adult",
+          },
+          { type: "truth", content: "曾經使用過情趣玩具嗎？", level: "Adult" },
+          { type: "truth", content: "覺得尺寸重要嗎？", level: "Adult" },
+          { type: "truth", content: "曾經在做的時候睡著嗎？", level: "Adult" },
+          { type: "truth", content: "喜歡口交嗎？", level: "Adult" },
+          { type: "truth", content: "曾經被抓包過自慰嗎？", level: "Adult" },
+          { type: "truth", content: "喜歡被綁起來嗎？", level: "Adult" },
+          { type: "truth", content: "曾經玩過角色扮演嗎？", level: "Adult" },
+          {
+            type: "truth",
+            content: "覺得性愛中最重要的環節是什麼？",
+            level: "Adult",
+          },
+          { type: "dare", content: "發出呻吟聲10秒。", level: "Adult" },
+          {
+            type: "dare",
+            content: "對著在場一位異性做出挑逗動作。",
+            level: "Adult",
+          },
+          {
+            type: "dare",
+            content: "讓在場一位異性摸你的大腿內側。",
+            level: "Adult",
+          },
+          {
+            type: "dare",
+            content: "模仿一種性愛姿勢（對著空氣）。",
+            level: "Adult",
+          },
+          {
+            type: "dare",
+            content: "脫掉一件衣服（外套或配件）。",
+            level: "Adult",
+          },
+          { type: "dare", content: "親吻在場一位異性的耳朵。", level: "Adult" },
+          {
+            type: "dare",
+            content: "讓在場一位異性坐在你身上做伏地挺身。",
+            level: "Adult",
+          },
+          {
+            type: "dare",
+            content: "用嘴巴解開在場一位異性的扣子。",
+            level: "Adult",
+          },
+          {
+            type: "dare",
+            content: "隔著衣服撫摸在場一位異性的胸部/腹肌。",
+            level: "Adult",
+          },
+          { type: "dare", content: "說一句你覺得最色的話。", level: "Adult" },
         ],
         state: {
           players: [],
@@ -1877,7 +2219,7 @@
           settings: {
             speed: 30,
             duration: 5000,
-            difficultyFilter: "Any",
+            difficultyFilter: "All",
             segmentCounts: { truth: 10, dare: 10, pass: 2 },
           },
         },
@@ -1891,6 +2233,9 @@
           if (saved) {
             const parsed = JSON.parse(saved);
             this.state = { ...this.state, ...parsed };
+            // Migration for old difficulty filter
+            if (this.state.settings.difficultyFilter === "Any")
+              this.state.settings.difficultyFilter = "All";
           }
         },
         saveToStorage() {
@@ -1983,16 +2328,24 @@
         getQuestionByType(type) {
           let filtered = this.state.questions.filter((q) => q.type === type);
           const filterLevel = this.state.settings.difficultyFilter;
-          if (filterLevel !== "Any") {
-            if (filterLevel === "Adult")
-              filtered = filtered.filter((q) => q.level === "Adult");
-            else if (filterLevel === "Hard")
-              filtered = filtered.filter((q) =>
-                ["Hard", "Adult"].includes(q.level)
-              );
-            else if (filterLevel === "Normal")
-              filtered = filtered.filter((q) => q.level !== "Easy");
+
+          if (filterLevel === "Safe") {
+            filtered = filtered.filter((q) =>
+              ["Easy", "Normal"].includes(q.level)
+            );
+          } else if (filterLevel === "Standard") {
+            filtered = filtered.filter((q) =>
+              ["Easy", "Normal", "Hard"].includes(q.level)
+            );
+          } else if (filterLevel === "Spicy") {
+            filtered = filtered.filter((q) =>
+              ["Hard", "Adult"].includes(q.level)
+            );
+          } else if (filterLevel === "Adult") {
+            filtered = filtered.filter((q) => q.level === "Adult");
           }
+          // "All" returns everything
+
           if (filtered.length === 0) return { content: "無符合條件的題目" };
           return filtered[Math.floor(Math.random() * filtered.length)];
         },
@@ -2289,7 +2642,7 @@
               DataModule.addQuestion({
                 type: document.getElementById("q-type").value,
                 content: input.value,
-                level: document.getElementById("q-difficulty").value,
+                level: "Normal",
               });
               input.value = "";
             }
@@ -2363,6 +2716,12 @@
               }
             });
           });
+
+          document
+            .getElementById("list-difficulty-filter")
+            .addEventListener("change", () => {
+              UIModule.renderQuestionList();
+            });
 
           // Keyboard
           document.addEventListener("keydown", (e) => {
@@ -2456,6 +2815,10 @@
         renderQuestionList(filterType) {
           if (filterType) this.currentQuestionFilter = filterType;
           const list = document.getElementById("question-list");
+          const levelFilter = document.getElementById(
+            "list-difficulty-filter"
+          ).value;
+
           list.innerHTML = "";
           DataModule.state.questions.forEach((q, i) => {
             if (
@@ -2463,6 +2826,8 @@
               q.type !== this.currentQuestionFilter
             )
               return;
+            if (levelFilter !== "all" && q.level !== levelFilter) return;
+
             // Simplified render
             const delBtn = NetworkModule.isHost
               ? `<button class="delete-btn" onclick="DataModule.removeQuestion(${i})"><i class="material-icons">delete</i></button>`

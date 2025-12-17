@@ -150,7 +150,7 @@
         flex: 1;
         margin: 0 !important;
       }
-      @media (max-width: 480px) {
+      @media (max-width: 1023px) {
         .login-box {
           padding: 25px 15px;
         }
@@ -192,7 +192,7 @@
       .status-bar {
         position: absolute;
         top: 50%;
-        left: 60px;
+        right: 15px;
         transform: translateY(-50%);
         z-index: 20;
         display: flex;
@@ -274,18 +274,6 @@
         letter-spacing: 2px;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         font-size: 1.5rem;
-      }
-      header .audio-controls {
-        position: absolute;
-        right: 15px;
-        z-index: 20;
-      }
-      header .audio-controls .audio-btn {
-        background: none;
-        border: none;
-        color: var(--gold);
-        cursor: pointer;
-        padding: 5px;
       }
 
       nav {
@@ -762,7 +750,7 @@
         animation-iteration-count: infinite;
       }
 
-      @media (min-width: 768px) {
+      @media (min-width: 1024px) {
         body {
           display: grid;
           grid-template-columns: var(--sidebar-width) 1fr;
@@ -795,9 +783,15 @@
           padding: 18px 30px;
           gap: 20px;
         }
-        /* v2.0 Update: 確保左側 Status bar 不會被擋住 */
-        .status-bar {
-          left: 20px;
+        body.sidebar-collapsed {
+          grid-template-columns: var(--sidebar-width-collapsed) 1fr;
+        }
+        body.sidebar-collapsed nav .nav-btn span {
+          display: none;
+        }
+        body.sidebar-collapsed nav .nav-btn {
+          justify-content: center;
+          padding: 18px 0;
         }
       }
     </style>
@@ -898,11 +892,6 @@
         </button>
       </div>
       <h1>真心話大冒險</h1>
-      <div class="audio-controls">
-        <button class="audio-btn" id="musicToggle">
-          <i class="material-icons">music_off</i>
-        </button>
-      </div>
     </header>
 
     <main>
@@ -1166,6 +1155,13 @@
             accept=".json"
           />
         </div>
+        <button
+          id="btn-reset-default"
+          class="btn-small btn-danger host-only"
+          style="width: 100%; margin-top: 10px"
+        >
+          <i class="material-icons">restart_alt</i> 恢復預設值
+        </button>
       </section>
     </main>
 
@@ -1451,12 +1447,427 @@
       const DataModule = {
         key: "luxuryTOD_v3",
         defaultDB: [
-          /* 200 Questions Placeholder - 為了節省長度，這裡用簡短版，請自行貼回原本的200題 */
-          { type: "truth", content: "你最近一次哭是什麼時候？", level: "Easy" },
+          {
+            type: "truth",
+            content: "你的手機桌布是什麼？為什麼選這張？",
+            level: "Easy",
+          },
+          {
+            type: "truth",
+            content: "如果中樂透頭獎，第一件事做什麼？",
+            level: "Easy",
+          },
+          {
+            type: "truth",
+            content: "你睡覺有什麼怪癖？（打呼、流口水、抱被子...）",
+            level: "Easy",
+          },
+          { type: "truth", content: "最近一次哭是因為什麼？", level: "Easy" },
+          { type: "truth", content: "覺得自己像哪種動物？", level: "Easy" },
+          { type: "truth", content: "你最怕哪種昆蟲或動物？", level: "Easy" },
+          {
+            type: "truth",
+            content: "如果能有超能力，你想要什麼？",
+            level: "Easy",
+          },
+          { type: "truth", content: "小時候的夢想職業是什麼？", level: "Easy" },
+          { type: "truth", content: "去KTV必點的一首歌是？", level: "Easy" },
+          {
+            type: "truth",
+            content: "洗澡時會做的最奇怪的一件事？",
+            level: "Easy",
+          },
+          { type: "truth", content: "身上哪個部位最滿意？", level: "Easy" },
+          {
+            type: "truth",
+            content: "說出一個你絕對不敢吃的食物。",
+            level: "Easy",
+          },
+          { type: "truth", content: "你覺得在場誰最自戀？", level: "Easy" },
+          { type: "truth", content: "上一次尿床是幾歲？", level: "Easy" },
+          { type: "truth", content: "買過最後悔的東西是什麼？", level: "Easy" },
+          {
+            type: "truth",
+            content: "如果明天是世界末日，你會吃什麼？",
+            level: "Easy",
+          },
+          { type: "truth", content: "你相信這世上有鬼嗎？", level: "Easy" },
+          { type: "truth", content: "做過最奇怪的夢是什麼？", level: "Easy" },
+          {
+            type: "truth",
+            content: "你的拿手菜是什麼？（泡麵也算）",
+            level: "Easy",
+          },
+          { type: "truth", content: "最喜歡的一部電影是？", level: "Easy" },
+          { type: "truth", content: "覺得自己心理年齡幾歲？", level: "Easy" },
+          {
+            type: "truth",
+            content: "如果可以跟在場一人交換身份一天，想選誰？",
+            level: "Easy",
+          },
+          {
+            type: "truth",
+            content: "說出一件你小時候做過的蠢事。",
+            level: "Easy",
+          },
+          {
+            type: "truth",
+            content: "你有多少天沒洗頭的最高紀錄？",
+            level: "Easy",
+          },
+          {
+            type: "truth",
+            content: "覺得在場誰看起來脾氣最好？",
+            level: "Easy",
+          },
           { type: "dare", content: "模仿一種動物直到下一輪。", level: "Easy" },
+          { type: "dare", content: "做鬼臉自拍一張。", level: "Easy" },
+          { type: "dare", content: "模仿一種動物的叫聲。", level: "Easy" },
+          {
+            type: "dare",
+            content: "對著窗外大喊：「我是笨蛋！」",
+            level: "Easy",
+          },
+          {
+            type: "dare",
+            content: "原地轉 10 圈，然後走直線。",
+            level: "Easy",
+          },
+          {
+            type: "dare",
+            content: "讓大家看你手機裡第 5 張照片。",
+            level: "Easy",
+          },
+          {
+            type: "dare",
+            content: "用「喵」代替「我」說話三分鐘。",
+            level: "Easy",
+          },
+          { type: "dare", content: "模仿在場某個人的口頭禪。", level: "Easy" },
+          { type: "dare", content: "誇獎右邊的人三個優點。", level: "Easy" },
+          {
+            type: "dare",
+            content: "唱一首兒歌（例如兩隻老虎）。",
+            level: "Easy",
+          },
+          { type: "dare", content: "用屁股寫字（你的名字）。", level: "Easy" },
+          { type: "dare", content: "讓左邊的人幫你整理頭髮。", level: "Easy" },
+          { type: "dare", content: "雙手舉高維持一分鐘。", level: "Easy" },
+          {
+            type: "dare",
+            content: "和右邊的人十指緊扣 10 秒。",
+            level: "Easy",
+          },
+          { type: "dare", content: "模仿名模走台步一圈。", level: "Easy" },
+          { type: "dare", content: "講一個冷笑話。", level: "Easy" },
+          {
+            type: "dare",
+            content: "跟大家分享你最近的一個搜尋紀錄。",
+            level: "Easy",
+          },
+          { type: "dare", content: "對著鏡子稱讚自己 30 秒。", level: "Easy" },
+          { type: "dare", content: "學嬰兒哭 10 秒。", level: "Easy" },
+          { type: "dare", content: "喝一大杯水。", level: "Easy" },
+          { type: "dare", content: "讓大家檢查你的包包。", level: "Easy" },
+          {
+            type: "truth",
+            content: "曾經假裝生病請假去做什麼？",
+            level: "Normal",
+          },
+          { type: "truth", content: "覺得在場誰的衣品最差？", level: "Normal" },
+          {
+            type: "truth",
+            content: "手機裡最醜的一張照片是誰？（必須展示）",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "曾經偷看過誰的手機或日記？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "說出你在場最想吐槽的一個人。",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "在場這群人中，你覺得誰將來會最富有？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "曾經在游泳池偷尿尿過嗎？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "上一次放屁不小心崩出「東西」是什麼時候？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "如果你是異性，你會想跟自己交往嗎？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "曾經把別人送的禮物轉送出去嗎？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "覺得在場誰最容易被詐騙？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "說出一個你不想讓父母知道的秘密。",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "曾經在公共場合做過最丟臉的事？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "覺得哪個卡通人物最性感？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "如果要刪除一位在場好友的聯絡方式，選誰？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "曾經對老闆或老師說過最大的謊？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "洗衣服會把內褲跟襪子一起洗嗎？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "曾經偷吃過別人的東西沒承認嗎？",
+            level: "Normal",
+          },
+          { type: "truth", content: "覺得在場誰最會記仇？", level: "Normal" },
+          { type: "truth", content: "有沒有挖鼻孔吃下去過？", level: "Normal" },
+          {
+            type: "dare",
+            content: "隨機打給通訊錄一個人唱生日快樂歌。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "用屁股撞在場每個人的屁股一下。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "含著水哼一首歌讓大家猜。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "跳一段目前最紅的抖音舞。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "讓右邊的人搔你癢 10 秒鐘，不能笑。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "用你的手肘打字發一則動態。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "跪在椅子上模仿古代人請安。",
+            level: "Normal",
+          },
+          { type: "dare", content: "夾著鼻子說話一輪。", level: "Normal" },
+          {
+            type: "dare",
+            content: "把鞋子脫下來，聞一下並形容味道。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "去廚房特調一杯「怪味飲料」並喝一口。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "打給媽媽說：「我好像喜歡上同性了」（記得解釋）。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "讓在場每個人彈你額頭一下。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "假裝電視購物推銷你穿的襪子。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "對著Siri大喊「我好寂寞」。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "背著右邊的人繞房間一圈。",
+            level: "Normal",
+          },
           { type: "truth", content: "說出你做過最違法的事情。", level: "Hard" },
+          {
+            type: "truth",
+            content: "這輩子最後悔的一件事是什麼？",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "如果生命只剩24小時，想對誰說什麼？",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "成長過程中，哪件事對你的價值觀影響最大？",
+            level: "Hard",
+          },
+          { type: "truth", content: "你最害怕失去什麼？", level: "Hard" },
+          {
+            type: "truth",
+            content: "曾經對朋友的另一半動過心嗎？",
+            level: "Hard",
+          },
+          { type: "truth", content: "覺得在場誰最難相處？", level: "Hard" },
+          {
+            type: "truth",
+            content: "如果必須跟在場一個人絕交，你會選誰？",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "上一次發自內心大哭是什麼時候？",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "你覺得自己最大的缺點是什麼？",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "有沒有哪個夢想是你已經放棄的？",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "讓大家瀏覽你的瀏覽器搜尋紀錄（最近3條）。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "去冰箱拿一顆冰塊，放在衣服裡直到融化。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "在一位異性身上做伏地挺身 5 下。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "讓大家看你手機相簿裡最新的那張截圖。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "跟大家分享你內褲的顏色和款式（必須檢查）。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "公主抱（或被公主抱）一位異性做深蹲 3 下。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "擁抱在你右邊的人 20 秒，什麼話都不能說。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "打電話給一位好久沒聯絡的朋友，說想他了。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "選一個人，幫他按摩 3 分鐘。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "在社群媒體上發一篇感謝文，感謝在場的一個人。",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "在場的異性中，誰最接近你的性幻想對象？",
+            level: "Adult",
+          },
+          {
+            type: "truth",
+            content: "第一次發生性行為是在幾歲？",
+            level: "Adult",
+          },
+          {
+            type: "truth",
+            content: "曾經有過一夜情嗎？或者想嘗試嗎？",
+            level: "Adult",
+          },
+          {
+            type: "truth",
+            content: "能夠接受的年齡差最大是多少？",
+            level: "Adult",
+          },
+          { type: "truth", content: "喜歡開燈還是關燈辦事？", level: "Adult" },
           { type: "dare", content: "親吻你左邊玩家的脖子。", level: "Adult" },
-          // ... (請將 v1.0 的 200 題完整複製回這裡) ...
+          {
+            type: "dare",
+            content: "選一位異性，用嘴對嘴傳遞一張衛生紙（或冰塊）。",
+            level: "Adult",
+          },
+          {
+            type: "dare",
+            content: "在在場異性中選一位，在他耳邊吹氣並說悄悄話。",
+            level: "Adult",
+          },
+          {
+            type: "dare",
+            content: "讓一位異性坐在你大腿上 1 分鐘。",
+            level: "Adult",
+          },
+          {
+            type: "dare",
+            content: "對著一位異性做出挑逗的吃香蕉（或手指）動作。",
+            level: "Adult",
+          },
+          {
+            type: "dare",
+            content: "讓右邊的人在你脖子上種草莓（或假裝用力吸一下）。",
+            level: "Adult",
+          },
         ],
         state: {
           players: [],
@@ -1473,6 +1884,7 @@
         init() {
           // Default init
           this.state.questions = [...this.defaultDB];
+          this.loadFromStorage();
         },
         loadFromStorage() {
           const saved = localStorage.getItem(this.key);
@@ -1483,6 +1895,14 @@
         },
         saveToStorage() {
           localStorage.setItem(this.key, JSON.stringify(this.state));
+        },
+        resetToDefault() {
+          if (
+            confirm("確定要恢復預設值嗎？所有自訂題目、玩家與紀錄將被清除。")
+          ) {
+            localStorage.removeItem(this.key);
+            location.reload();
+          }
         },
         // Methods modified to sync with Network
         addPlayer(name) {
@@ -1518,16 +1938,19 @@
           this.state.questions.push(q);
           this.saveToStorage();
           NetworkModule.pushUpdate("questions", this.state.questions);
+          UIModule.renderQuestionList();
         },
         removeQuestion(index) {
           this.state.questions.splice(index, 1);
           this.saveToStorage();
           NetworkModule.pushUpdate("questions", this.state.questions);
+          UIModule.renderQuestionList();
         },
         clearQuestions() {
           this.state.questions = [];
           this.saveToStorage();
           NetworkModule.pushUpdate("questions", this.state.questions);
+          UIModule.renderQuestionList();
         },
         addHistory(item) {
           this.state.history.unshift(item);
@@ -1834,6 +2257,7 @@
 
       /* ==================== UI & Audio & Effect ==================== */
       const UIModule = {
+        currentQuestionFilter: "all",
         init() {
           this.bindEvents();
           this.renderSettingsValues();
@@ -1908,6 +2332,9 @@
               document.getElementById("file-import").click()
             );
           document
+            .getElementById("btn-reset-default")
+            .addEventListener("click", () => DataModule.resetToDefault());
+          document
             .getElementById("file-import")
             .addEventListener("change", (e) => {
               const reader = new FileReader();
@@ -1916,6 +2343,26 @@
               };
               if (e.target.files[0]) reader.readAsText(e.target.files[0]);
             });
+
+          // Tabs
+          document.querySelectorAll(".diff-tab").forEach((tab) => {
+            tab.addEventListener("click", (e) => {
+              const parent = tab.parentElement;
+              if (parent.id === "diff-selector") {
+                parent
+                  .querySelectorAll(".diff-tab")
+                  .forEach((t) => t.classList.remove("active"));
+                e.target.classList.add("active");
+                UIModule.renderQuestionList(e.target.dataset.val);
+              } else if (parent.id === "timer-mode-selector") {
+                parent
+                  .querySelectorAll(".diff-tab")
+                  .forEach((t) => t.classList.remove("active"));
+                e.target.classList.add("active");
+                TimerModule.switchMode(e.target.dataset.mode);
+              }
+            });
+          });
 
           // Keyboard
           document.addEventListener("keydown", (e) => {
@@ -2006,10 +2453,16 @@
           document.getElementById("player-count").innerText =
             DataModule.state.players.length;
         },
-        renderQuestionList() {
+        renderQuestionList(filterType) {
+          if (filterType) this.currentQuestionFilter = filterType;
           const list = document.getElementById("question-list");
           list.innerHTML = "";
           DataModule.state.questions.forEach((q, i) => {
+            if (
+              this.currentQuestionFilter !== "all" &&
+              q.type !== this.currentQuestionFilter
+            )
+              return;
             // Simplified render
             const delBtn = NetworkModule.isHost
               ? `<button class="delete-btn" onclick="DataModule.removeQuestion(${i})"><i class="material-icons">delete</i></button>`
@@ -2113,12 +2566,6 @@
           this.spin = document.getElementById("sfx-spin");
           this.win = document.getElementById("sfx-win");
           this.alarm = document.getElementById("sfx-alarm");
-          document
-            .getElementById("musicToggle")
-            .addEventListener("click", () => {
-              if (this.bgm.paused) this.bgm.play().catch(() => {});
-              else this.bgm.pause();
-            });
         },
         play(k) {
           if (this[k]) this[k].play().catch(() => {});
@@ -2134,9 +2581,25 @@
       const TimerModule = {
         mode: "countdown",
         time: 60,
+        initialTime: 60,
         interval: null,
         isRunning: false,
         init() {
+          this.update();
+        },
+        switchMode(newMode) {
+          this.reset();
+          this.mode = newMode;
+          const presets = document.getElementById("timer-presets-container");
+          if (this.mode === "stopwatch") {
+            this.time = 0;
+            this.initialTime = 0;
+            presets.style.display = "none";
+          } else {
+            this.time = 60;
+            this.initialTime = 60;
+            presets.style.display = "flex";
+          }
           this.update();
         },
         toggle() {
@@ -2162,7 +2625,7 @@
         },
         reset() {
           this.pause();
-          this.time = 60;
+          this.time = this.initialTime;
           document
             .getElementById("timer-display")
             .classList.remove("timer-blink");
@@ -2177,8 +2640,11 @@
           AudioModule.play("alarm");
         },
         addTime(s) {
-          this.time += s;
-          this.update();
+          if (this.mode === "countdown") {
+            this.time += s;
+            this.initialTime = this.time;
+            this.update();
+          }
         },
         update() {
           const m = Math.floor(this.time / 60)

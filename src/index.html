@@ -919,7 +919,7 @@
           </div>
           <div class="result-box" id="display-result">點擊按鈕或空白鍵旋轉</div>
         </div>
-        <button id="spinBtn" class="btn-main host-only">開始旋轉</button>
+        <button id="spinBtn" class="btn-main" disabled>開始抽籤</button>
         <div
           id="guest-msg"
           class="guest-hidden"
@@ -1245,6 +1245,7 @@
         lastProcessedSpinTrigger: 0,
         lastProcessedResultTime: 0,
         pendingResult: null,
+        nextSpinner: null,
 
         createRoom() {
           if (!db) return this.startOffline();
@@ -1268,6 +1269,7 @@
             settings: DataModule.state.settings, // Sync settings
             history: [],
             stats: {},
+            nextSpinner: null,
           };
 
           this.roomRef.set(initialData).then(() => {
@@ -1414,6 +1416,12 @@
                   val.currentResult.player
                 );
               }
+            }
+
+            // Sync Next Spinner
+            if (val.nextSpinner !== undefined) {
+              this.nextSpinner = val.nextSpinner;
+              UIModule.updateSpinPermission();
             }
           });
         },
@@ -1676,14 +1684,26 @@
           }
         },
         spin(isInitiator = true) {
+          // 停止震動與鬧鐘相關效果
+          if (navigator.vibrate) navigator.vibrate(0);
+          document.body.classList.remove("shake-screen");
+          document
+            .getElementById("timer-display")
+            .classList.remove("timer-blink");
+          AudioModule.stop("alarm");
+
           if (this.isSpinning) return;
           this.isSpinning = true;
           document.querySelector(".game-info").style.background =
             "rgba(0, 0, 0, 0.6)";
 
-          if (isInitiator && NetworkModule.isHost) {
+          if (isInitiator) {
             // Host triggers network event
-            if (NetworkModule.roomRef) {
+            if (
+              NetworkModule.roomRef &&
+              (NetworkModule.isHost ||
+                NetworkModule.nickname === NetworkModule.nextSpinner)
+            ) {
               NetworkModule.roomRef.update({
                 spinTrigger: firebase.database.ServerValue.TIMESTAMP,
               });
@@ -1751,6 +1771,7 @@
                   player,
                   timestamp: firebase.database.ServerValue.TIMESTAMP,
                 },
+                nextSpinner: player,
               });
             }
             UIModule.showResult(result.type, content, player);
@@ -1792,6 +1813,7 @@
         init() {
           this.bindEvents();
           this.renderSettingsValues();
+          this.updateSpinPermission();
           WheelModule.init();
           AudioModule.init();
         },
@@ -1884,8 +1906,8 @@
               document.getElementById("panel-home").classList.contains("active")
             ) {
               e.preventDefault();
-              if (NetworkModule.isHost || NetworkModule.roomId === "LOCAL")
-                WheelModule.spin(true);
+              const btn = document.getElementById("spinBtn");
+              if (!btn.disabled) WheelModule.spin(true);
             }
             if (e.code === "Escape") this.switchPanel("panel-home");
           });
@@ -1916,6 +1938,7 @@
             document
               .querySelectorAll(".host-control")
               .forEach((el) => (el.disabled = false));
+            this.updateSpinPermission();
           } else {
             document
               .querySelectorAll(".host-only")
@@ -1926,7 +1949,25 @@
             document
               .querySelectorAll(".host-control")
               .forEach((el) => (el.disabled = true));
-            document.getElementById("spinBtn").disabled = true;
+            this.updateSpinPermission();
+          }
+        },
+        updateSpinPermission() {
+          const btn = document.getElementById("spinBtn");
+          if (NetworkModule.roomId === "LOCAL") {
+            btn.disabled = false;
+            btn.innerText = "開始抽籤";
+            return;
+          }
+          const isMe = NetworkModule.nickname === NetworkModule.nextSpinner;
+          if (NetworkModule.isHost || isMe) {
+            btn.disabled = false;
+            btn.innerText = isMe ? "輪到你了！開始抽籤" : "開始抽籤 (Host)";
+          } else {
+            btn.disabled = true;
+            btn.innerText = NetworkModule.nextSpinner
+              ? `等待 ${NetworkModule.nextSpinner} 抽籤`
+              : "等待房主開始";
           }
         },
         renderPlayerList() {

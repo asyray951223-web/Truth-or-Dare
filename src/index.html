@@ -1257,6 +1257,7 @@
 
           this.roomRef = db.ref("rooms/" + this.roomId);
 
+          // 使用物件結構儲存玩家，以便處理 onDisconnect
           // 初始化房間，將 LocalStorage 的資料推上去
           const initialData = {
             host: name,
@@ -1264,7 +1265,7 @@
             spinTrigger: 0,
             currentResult: null,
             createdAt: firebase.database.ServerValue.TIMESTAMP,
-            players: [name],
+            players: {}, // 初始化為空物件，enterGame 會加入房主
             questions: DataModule.state.questions, // Sync questions
             settings: DataModule.state.settings, // Sync settings
             history: [],
@@ -1291,11 +1292,6 @@
 
           this.roomRef.once("value").then((snapshot) => {
             if (snapshot.exists()) {
-              let players = snapshot.val().players || [];
-              if (!players.includes(name)) {
-                players.push(name);
-                this.roomRef.update({ players: players });
-              }
               this.enterGame();
             } else {
               alert("房間不存在！");
@@ -1320,6 +1316,14 @@
           if (this.roomId !== "LOCAL") {
             document.getElementById("status-indicator").classList.add("online");
             document.getElementById("qr-btn").style.display = "inline-block";
+
+            // 設定玩家上線與斷線自動移除
+            // 替換不合法字元以作為 Key
+            const safeName = this.nickname.replace(/[.$#\[\]\/]/g, "_");
+            const playerRef = this.roomRef.child("players/" + safeName);
+            playerRef.set({ name: this.nickname, isHost: this.isHost });
+            playerRef.onDisconnect().remove();
+
             this.listenForUpdates();
           } else {
             // 單機模式：從 local storage 初始化
@@ -1345,11 +1349,17 @@
             if (!val) return;
 
             // Sync Players
+            // 將 Firebase 的物件結構 { key: {name: "A"}, key2: {name: "B"} } 轉回陣列 ["A", "B"]
+            const serverPlayersObj = val.players || {};
+            const serverPlayersList = Object.values(serverPlayersObj).map(
+              (p) => p.name
+            );
+
             if (
               JSON.stringify(DataModule.state.players) !==
-              JSON.stringify(val.players)
+              JSON.stringify(serverPlayersList)
             ) {
-              DataModule.state.players = val.players || [];
+              DataModule.state.players = serverPlayersList;
               UIModule.renderPlayerList();
             }
 
@@ -1431,7 +1441,7 @@
           if (this.roomId === "LOCAL" || !this.roomRef) return;
           // Only Host should push most structural changes, but Guests trigger spins via Host or receive updates
           // Here we assume simple trust: whoever changes state pushes it if allowed.
-          if (this.isHost || key === "players") {
+          if (this.isHost) {
             this.roomRef.update({ [key]: data });
           }
         },
@@ -1476,19 +1486,33 @@
         },
         // Methods modified to sync with Network
         addPlayer(name) {
-          if (!this.state.players.includes(name)) {
+          if (NetworkModule.roomId !== "LOCAL") {
+            // 線上模式：寫入節點
+            const safeName = name.replace(/[.$#\[\]\/]/g, "_");
+            NetworkModule.roomRef
+              .child("players/" + safeName)
+              .set({ name: name, isHost: false });
+            return true;
+          } else if (!this.state.players.includes(name)) {
+            // 單機模式
             this.state.players.push(name);
             this.saveToStorage();
-            NetworkModule.pushUpdate("players", this.state.players);
             UIModule.renderPlayerList();
             return true;
           }
           return false;
         },
         removePlayer(index) {
-          this.state.players.splice(index, 1);
-          this.saveToStorage();
-          NetworkModule.pushUpdate("players", this.state.players);
+          const name = this.state.players[index];
+          if (NetworkModule.roomId !== "LOCAL") {
+            // 線上模式：移除節點
+            const safeName = name.replace(/[.$#\[\]\/]/g, "_");
+            NetworkModule.roomRef.child("players/" + safeName).remove();
+          } else {
+            // 單機模式
+            this.state.players.splice(index, 1);
+            this.saveToStorage();
+          }
         },
         addQuestion(q) {
           this.state.questions.push(q);

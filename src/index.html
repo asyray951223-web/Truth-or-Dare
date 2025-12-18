@@ -1526,6 +1526,13 @@
             ) {
               DataModule.state.players = serverPlayersList;
               UIModule.renderPlayerList();
+              if (
+                document
+                  .getElementById("panel-leaderboard")
+                  .classList.contains("active")
+              ) {
+                UIModule.renderLeaderboard();
+              }
             }
 
             // Sync Questions
@@ -2732,6 +2739,13 @@
             this.state.players.push({ name: name, weight: 1 });
             this.saveToStorage();
             UIModule.renderPlayerList();
+            if (
+              document
+                .getElementById("panel-leaderboard")
+                .classList.contains("active")
+            ) {
+              UIModule.renderLeaderboard();
+            }
             return true;
           }
           return false;
@@ -2750,6 +2764,13 @@
             this.state.players.splice(index, 1);
             this.saveToStorage();
             UIModule.renderPlayerList();
+            if (
+              document
+                .getElementById("panel-leaderboard")
+                .classList.contains("active")
+            ) {
+              UIModule.renderLeaderboard();
+            }
           }
         },
         updatePlayerWeight(index, weight) {
@@ -3430,7 +3451,13 @@
         renderLeaderboard() {
           const list = document.getElementById("leaderboard-list");
           list.innerHTML = "";
-          const stats = Object.entries(DataModule.state.stats)
+
+          const combinedStats = { ...DataModule.state.stats };
+          DataModule.state.players.forEach((p) => {
+            if (combinedStats[p.name] === undefined) combinedStats[p.name] = 0;
+          });
+
+          const stats = Object.entries(combinedStats)
             .map(([k, v]) => ({ name: k, count: v }))
             .sort((a, b) => b.count - a.count);
           stats.forEach((p, i) => {

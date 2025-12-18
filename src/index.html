@@ -517,8 +517,6 @@
       }
 
       .list-container {
-        max-height: 60vh;
-        overflow-y: auto;
       }
       .list-item {
         background: rgba(255, 255, 255, 0.05);
@@ -1333,7 +1331,11 @@
             // 替換不合法字元以作為 Key
             const safeName = this.nickname.replace(/[.$#\[\]\/]/g, "_");
             const playerRef = this.roomRef.child("players/" + safeName);
-            playerRef.set({ name: this.nickname, isHost: this.isHost });
+            playerRef.set({
+              name: this.nickname,
+              isHost: this.isHost,
+              weight: 1,
+            });
             playerRef.onDisconnect().remove();
 
             this.listenForUpdates();
@@ -1362,9 +1364,13 @@
 
             // Sync Players
             // 將 Firebase 的物件結構 { key: {name: "A"}, key2: {name: "B"} } 轉回陣列 ["A", "B"]
+            // v3.1 Update: Sync objects {name, weight}
             const serverPlayersObj = val.players || {};
             const serverPlayersList = Object.values(serverPlayersObj).map(
-              (p) => p.name
+              (p) => ({
+                name: p.name,
+                weight: p.weight !== undefined ? p.weight : 1,
+              })
             );
 
             if (
@@ -2236,6 +2242,16 @@
             // Migration for old difficulty filter
             if (this.state.settings.difficultyFilter === "Any")
               this.state.settings.difficultyFilter = "All";
+            // Migration for players (string -> object)
+            if (
+              this.state.players.length > 0 &&
+              typeof this.state.players[0] === "string"
+            ) {
+              this.state.players = this.state.players.map((name) => ({
+                name,
+                weight: 1,
+              }));
+            }
           }
         },
         saveToStorage() {
@@ -2256,11 +2272,11 @@
             const safeName = name.replace(/[.$#\[\]\/]/g, "_");
             NetworkModule.roomRef
               .child("players/" + safeName)
-              .set({ name: name, isHost: false });
+              .set({ name: name, isHost: false, weight: 1 });
             return true;
-          } else if (!this.state.players.includes(name)) {
+          } else if (!this.state.players.some((p) => p.name === name)) {
             // 單機模式
-            this.state.players.push(name);
+            this.state.players.push({ name: name, weight: 1 });
             this.saveToStorage();
             UIModule.renderPlayerList();
             return true;
@@ -2268,7 +2284,10 @@
           return false;
         },
         removePlayer(index) {
-          const name = this.state.players[index];
+          const p = this.state.players[index];
+          if (!p) return;
+          const name = p.name;
+
           if (NetworkModule.roomId !== "LOCAL") {
             // 線上模式：移除節點
             const safeName = name.replace(/[.$#\[\]\/]/g, "_");
@@ -2276,6 +2295,23 @@
           } else {
             // 單機模式
             this.state.players.splice(index, 1);
+            this.saveToStorage();
+            UIModule.renderPlayerList();
+          }
+        },
+        updatePlayerWeight(index, weight) {
+          const w = parseInt(weight);
+          if (isNaN(w) || w < 0) return;
+          const p = this.state.players[index];
+          if (!p) return;
+
+          if (NetworkModule.roomId !== "LOCAL") {
+            const safeName = p.name.replace(/[.$#\[\]\/]/g, "_");
+            NetworkModule.roomRef
+              .child("players/" + safeName)
+              .update({ weight: w });
+          } else {
+            p.weight = w;
             this.saveToStorage();
           }
         },
@@ -2351,9 +2387,23 @@
         },
         getRandomPlayer() {
           if (this.state.players.length === 0) return "匿名玩家";
-          return this.state.players[
-            Math.floor(Math.random() * this.state.players.length)
-          ];
+
+          const totalWeight = this.state.players.reduce(
+            (sum, p) => sum + (p.weight || 0),
+            0
+          );
+          if (totalWeight <= 0)
+            return this.state.players[
+              Math.floor(Math.random() * this.state.players.length)
+            ].name;
+
+          let r = Math.random() * totalWeight;
+          for (const p of this.state.players) {
+            const w = p.weight || 0;
+            if (r < w) return p.name;
+            r -= w;
+          }
+          return this.state.players[this.state.players.length - 1].name;
         },
         aiGenerate() {
           const types = ["truth", "dare"];
@@ -2382,6 +2432,16 @@
           try {
             const data = JSON.parse(jsonStr);
             if (data.players && data.questions) {
+              // Migration
+              if (
+                data.players.length > 0 &&
+                typeof data.players[0] === "string"
+              ) {
+                data.players = data.players.map((name) => ({
+                  name,
+                  weight: 1,
+                }));
+              }
               this.state = data;
               this.saveToStorage();
               // If Host, sync to everyone
@@ -2804,10 +2864,27 @@
           const list = document.getElementById("player-list");
           list.innerHTML = "";
           DataModule.state.players.forEach((p, i) => {
-            const delBtn = NetworkModule.isHost
+            const isHost = NetworkModule.isHost;
+            const weightInput = isHost
+              ? `<div style="display:flex; align-items:center; margin-right:5px" onclick="event.stopPropagation()">
+                     <input type="range" style="width:80px; accent-color:var(--gold); margin-right:5px; cursor:pointer" value="${p.weight}" min="0" max="10" 
+                     oninput="document.getElementById('w-val-${i}').innerText=this.value" 
+                     onchange="DataModule.updatePlayerWeight(${i}, this.value)">
+                     <span id="w-val-${i}" style="width:20px; text-align:center; color:var(--gold); font-weight:bold">${p.weight}</span>
+                   </div>`
+              : `<span style="font-size:0.8rem; color:#888; margin-right:5px">權重: ${p.weight}</span>`;
+
+            const delBtn = isHost
               ? `<button class="delete-btn" onclick="DataModule.removePlayer(${i})"><i class="material-icons">delete</i></button>`
               : "";
-            list.innerHTML += `<div class="list-item"><span><i class="material-icons" style="font-size:16px">person</i> ${p}</span>${delBtn}</div>`;
+
+            list.innerHTML += `<div class="list-item">
+                <div style="display:flex; align-items:center; flex:1">
+                    <i class="material-icons" style="font-size:16px; margin-right:5px">person</i> 
+                    <span>${p.name}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:5px">${weightInput}${delBtn}</div>
+            </div>`;
           });
           document.getElementById("player-count").innerText =
             DataModule.state.players.length;

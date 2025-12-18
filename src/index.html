@@ -1176,6 +1176,18 @@
         >
           <i class="material-icons">restart_alt</i> 恢復預設值
         </button>
+        <button
+          id="btn-leave-room"
+          class="btn-small"
+          style="
+            width: 100%;
+            margin-top: 10px;
+            background: #444;
+            border: 1px solid #666;
+          "
+        >
+          <i class="material-icons">logout</i> 退出房間 / 返回首頁
+        </button>
       </section>
     </main>
 
@@ -1307,6 +1319,27 @@
               alert("房間不存在！");
             }
           });
+        },
+
+        leaveRoom() {
+          if (this.roomId !== "LOCAL" && this.roomRef) {
+            // 移除線上玩家節點
+            const safeName = this.nickname.replace(/[.$#\[\]\/]/g, "_");
+            this.roomRef.child("players/" + safeName).remove();
+            this.roomRef.off(); // 停止監聽
+          }
+
+          this.roomId = null;
+          this.isHost = false;
+          this.roomRef = null;
+
+          // 重置 UI 與狀態
+          document.getElementById("login-overlay").classList.remove("hidden");
+          document.getElementById("room-display").innerText = "OFFLINE";
+          document
+            .getElementById("status-indicator")
+            .classList.remove("online");
+          document.getElementById("qr-btn").style.display = "none";
         },
 
         startOffline() {
@@ -2750,6 +2783,11 @@
           document
             .getElementById("btn-reset-default")
             .addEventListener("click", () => DataModule.resetToDefault());
+          document
+            .getElementById("btn-leave-room")
+            .addEventListener("click", () => {
+              if (confirm("確定要退出房間嗎？")) NetworkModule.leaveRoom();
+            });
           document
             .getElementById("file-import")
             .addEventListener("change", (e) => {

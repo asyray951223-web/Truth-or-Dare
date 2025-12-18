@@ -1513,6 +1513,17 @@
             // 將 Firebase 的物件結構 { key: {name: "A"}, key2: {name: "B"} } 轉回陣列 ["A", "B"]
             // v3.1 Update: Sync objects {name, weight}
             const serverPlayersObj = val.players || {};
+
+            // Security Check: If I'm a guest and not in the list, I've been kicked
+            if (!this.isHost && this.roomId !== "LOCAL") {
+              const safeName = this.nickname.replace(/[.$#\[\]\/]/g, "_");
+              if (!serverPlayersObj[safeName]) {
+                alert("你已被房主移除房間");
+                this.leaveRoom();
+                return;
+              }
+            }
+
             const serverPlayersList = Object.values(serverPlayersObj).map(
               (p) => ({
                 name: p.name,

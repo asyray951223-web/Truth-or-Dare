@@ -1382,7 +1382,10 @@
             }
 
             // Sync Questions
-            const serverQuestions = val.questions || [];
+            let serverQuestions = val.questions || [];
+            if (!Array.isArray(serverQuestions)) {
+              serverQuestions = Object.values(serverQuestions);
+            }
             if (
               JSON.stringify(DataModule.state.questions) !==
               JSON.stringify(serverQuestions)
@@ -2862,23 +2865,53 @@
         },
         renderPlayerList() {
           const list = document.getElementById("player-list");
-          list.innerHTML = "";
-          DataModule.state.players.forEach((p, i) => {
+          const players = DataModule.state.players;
+
+          // Optimization: Update in place if list structure matches
+          // This prevents slider interaction issues and flickering
+          if (list.children.length === players.length) {
+            let match = true;
+            const items = Array.from(list.children);
+            for (let i = 0; i < items.length; i++) {
+              const nameSpan = items[i].querySelector("span");
+              if (!nameSpan || nameSpan.innerText !== players[i].name) {
+                match = false;
+                break;
+              }
+            }
+            if (match) {
+              players.forEach((p, i) => {
+                const weight = p.weight !== undefined ? p.weight : 1;
+                const range = document.getElementById(`w-range-${i}`);
+                const val = document.getElementById(`w-val-${i}`);
+                if (range && document.activeElement !== range)
+                  range.value = weight;
+                if (val) val.innerText = weight;
+              });
+              document.getElementById("player-count").innerText =
+                players.length;
+              return;
+            }
+          }
+
+          let html = "";
+          players.forEach((p, i) => {
             const isHost = NetworkModule.isHost;
+            const weight = p.weight !== undefined ? p.weight : 1;
             const weightInput = isHost
               ? `<div style="display:flex; align-items:center; margin-right:5px" onclick="event.stopPropagation()">
-                     <input type="range" style="width:80px; accent-color:var(--gold); margin-right:5px; cursor:pointer" value="${p.weight}" min="0" max="10" 
+                     <input type="range" id="w-range-${i}" style="width:80px; accent-color:var(--gold); margin-right:5px; cursor:pointer; padding:0" value="${weight}" min="0" max="10" 
                      oninput="document.getElementById('w-val-${i}').innerText=this.value" 
                      onchange="DataModule.updatePlayerWeight(${i}, this.value)">
-                     <span id="w-val-${i}" style="width:20px; text-align:center; color:var(--gold); font-weight:bold">${p.weight}</span>
+                     <span id="w-val-${i}" style="width:20px; text-align:center; color:var(--gold); font-weight:bold">${weight}</span>
                    </div>`
-              : `<span style="font-size:0.8rem; color:#888; margin-right:5px">權重: ${p.weight}</span>`;
+              : `<span style="font-size:0.8rem; color:#888; margin-right:5px">權重: ${weight}</span>`;
 
             const delBtn = isHost
               ? `<button class="delete-btn" onclick="DataModule.removePlayer(${i})"><i class="material-icons">delete</i></button>`
               : "";
 
-            list.innerHTML += `<div class="list-item">
+            html += `<div class="list-item">
                 <div style="display:flex; align-items:center; flex:1">
                     <i class="material-icons" style="font-size:16px; margin-right:5px">person</i> 
                     <span>${p.name}</span>
@@ -2886,6 +2919,7 @@
                 <div style="display:flex; align-items:center; gap:5px">${weightInput}${delBtn}</div>
             </div>`;
           });
+          list.innerHTML = html;
           document.getElementById("player-count").innerText =
             DataModule.state.players.length;
         },

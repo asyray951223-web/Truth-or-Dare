@@ -517,8 +517,6 @@
       }
 
       .list-container {
-        max-height: 60vh;
-        overflow-y: auto;
       }
       .list-item {
         background: rgba(255, 255, 255, 0.05);
@@ -609,17 +607,6 @@
         font-weight: bold;
         color: var(--gold);
         margin-left: 10px;
-      }
-
-      .weight-input {
-        width: 60px;
-        padding: 5px;
-        background: #333;
-        border: 1px solid var(--gold-dark);
-        color: #fff;
-        border-radius: 5px;
-        text-align: center;
-        font-size: 0.9rem;
       }
 
       /* Reaction Floating Menu */
@@ -1247,6 +1234,22 @@
             <option value="Adult">僅限大人 (18+)</option>
           </select>
         </div>
+        <div
+          class="slider-container"
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <label style="margin: 0">防重複抽中 (No Repeat)</label>
+          <input
+            type="checkbox"
+            id="check-no-repeat"
+            class="host-control"
+            style="width: 20px; height: 20px; margin: 0"
+          />
+        </div>
 
         <div class="section-title host-only" style="margin-top: 30px">
           資料備份
@@ -1282,6 +1285,18 @@
           style="width: 100%; margin-top: 10px"
         >
           <i class="material-icons">restart_alt</i> 恢復預設值
+        </button>
+        <button
+          id="btn-leave-room"
+          class="btn-small"
+          style="
+            width: 100%;
+            margin-top: 10px;
+            background: #444;
+            border: 1px solid #666;
+          "
+        >
+          <i class="material-icons">logout</i> 退出房間 / 返回首頁
         </button>
       </section>
     </main>
@@ -1539,9 +1554,12 @@
             }
 
             // Sync Stats
-            if (val.stats) {
-              DataModule.state.stats = val.stats;
-              // Only re-render if active panel is leaderboard to save performance
+            const serverStats = val.stats || {};
+            if (
+              JSON.stringify(DataModule.state.stats) !==
+              JSON.stringify(serverStats)
+            ) {
+              DataModule.state.stats = serverStats;
               if (
                 document
                   .getElementById("panel-leaderboard")
@@ -1606,6 +1624,27 @@
                 UIModule.showReaction(val.emoji);
               }
             });
+        },
+
+        leaveRoom() {
+          if (this.roomId !== "LOCAL" && this.roomRef) {
+            // 移除線上玩家節點
+            const safeName = this.nickname.replace(/[.$#\[\]\/]/g, "_");
+            this.roomRef.child("players/" + safeName).remove();
+            this.roomRef.off(); // 停止監聽
+          }
+
+          this.roomId = null;
+          this.isHost = false;
+          this.roomRef = null;
+
+          // 重置 UI 與狀態
+          document.getElementById("login-overlay").classList.remove("hidden");
+          document.getElementById("room-display").innerText = "OFFLINE";
+          document
+            .getElementById("status-indicator")
+            .classList.remove("online");
+          document.getElementById("qr-btn").style.display = "none";
         },
 
         sendReaction(emoji) {
@@ -2378,6 +2417,252 @@
             level: "Adult",
           },
           { type: "dare", content: "說一句你覺得最色的話。", level: "Adult" },
+          // 🟢 New Added Questions (v3.1 Expansion)
+          {
+            type: "truth",
+            content: "如果可以整型，你最想整哪裡？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "你覺得在場誰最適合當你的另一半？",
+            level: "Normal",
+          },
+          { type: "truth", content: "曾經被劈腿過嗎？", level: "Hard" },
+          {
+            type: "truth",
+            content: "如果一定要跟在場一個人接吻，你會選誰？",
+            level: "Hard",
+          },
+          {
+            type: "truth",
+            content: "你覺得自己性能力如何（1-10分）？",
+            level: "Adult",
+          },
+          { type: "truth", content: "最近一次DIY是什麼時候？", level: "Adult" },
+          {
+            type: "truth",
+            content: "看過最奇怪的A片類型是什麼？",
+            level: "Adult",
+          },
+          { type: "truth", content: "曾經在心裡偷偷詛咒過誰？", level: "Hard" },
+          { type: "truth", content: "你覺得在場誰最虛偽？", level: "Hard" },
+          { type: "truth", content: "有沒有欠錢不還過？", level: "Normal" },
+          {
+            type: "truth",
+            content: "上廁所完會看一眼排泄物嗎？",
+            level: "Easy",
+          },
+          { type: "truth", content: "洗澡會順便尿尿嗎？", level: "Easy" },
+          {
+            type: "truth",
+            content: "如果變成異性，第一件事想做什麼？",
+            level: "Easy",
+          },
+          {
+            type: "truth",
+            content: "最想刪除的一張照片是什麼？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "曾經對朋友的男/女朋友動心過嗎？",
+            level: "Hard",
+          },
+          { type: "truth", content: "說出一個你討厭的藝人。", level: "Normal" },
+          { type: "truth", content: "覺得在場誰最愛記仇？", level: "Normal" },
+          { type: "truth", content: "有沒有偷看過伴侶的手機？", level: "Hard" },
+          {
+            type: "truth",
+            content: "曾經跟不喜歡的人交往過嗎？",
+            level: "Hard",
+          },
+          { type: "truth", content: "初吻是在幾歲？", level: "Normal" },
+          { type: "truth", content: "最尷尬的一次約會經驗？", level: "Normal" },
+          { type: "truth", content: "有沒有被同性告白過？", level: "Normal" },
+          {
+            type: "truth",
+            content: "覺得自己哪個部位最性感？",
+            level: "Normal",
+          },
+          { type: "truth", content: "曾經裸睡過嗎？", level: "Easy" },
+          {
+            type: "truth",
+            content: "如果中了一億，會分給在場的人嗎？",
+            level: "Normal",
+          },
+          { type: "truth", content: "最受不了異性哪個行為？", level: "Normal" },
+          { type: "truth", content: "曾經為了愛做過最傻的事？", level: "Hard" },
+          {
+            type: "truth",
+            content: "有沒有當過第三者（或被當過）？",
+            level: "Hard",
+          },
+          { type: "truth", content: "覺得性重要還是愛重要？", level: "Adult" },
+          {
+            type: "truth",
+            content: "喜歡被控制還是控制對方？",
+            level: "Adult",
+          },
+          {
+            type: "truth",
+            content: "曾經在夢裡夢過在場的人嗎？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "如果世界末日，只能救一個人，救誰？",
+            level: "Hard",
+          },
+          { type: "truth", content: "最想跟誰道歉？", level: "Hard" },
+          {
+            type: "truth",
+            content: "有沒有說過謊來逃避聚會？",
+            level: "Normal",
+          },
+          {
+            type: "truth",
+            content: "最近一個搜尋的關鍵字是什麼？",
+            level: "Normal",
+          },
+          { type: "truth", content: "覺得自己聰明嗎？", level: "Easy" },
+          { type: "truth", content: "最喜歡的一道菜？", level: "Easy" },
+          { type: "truth", content: "有沒有什麼怪癖？", level: "Normal" },
+          { type: "truth", content: "曾經被警察攔下來過嗎？", level: "Normal" },
+          { type: "truth", content: "最害怕的一種死法？", level: "Hard" },
+          { type: "truth", content: "覺得在場誰最單純？", level: "Normal" },
+          { type: "truth", content: "曾經偷拿過家裡的錢嗎？", level: "Normal" },
+          { type: "truth", content: "有沒有假裝高潮過？", level: "Adult" },
+          { type: "truth", content: "最喜歡的愛愛時間長度？", level: "Adult" },
+          { type: "truth", content: "曾經在車上做過嗎？", level: "Adult" },
+          { type: "truth", content: "喜歡穿丁字褲嗎？", level: "Adult" },
+          { type: "truth", content: "有沒有拍過私密照？", level: "Adult" },
+          { type: "truth", content: "曾經跟網友約炮過嗎？", level: "Adult" },
+          { type: "truth", content: "覺得自己的顏值幾分？", level: "Normal" },
+          { type: "dare", content: "模仿一種動物的求偶舞。", level: "Easy" },
+          { type: "dare", content: "用屁股寫「我愛你」。", level: "Easy" },
+          { type: "dare", content: "聞右邊人的襪子。", level: "Normal" },
+          { type: "dare", content: "讓左邊的人畫你的臉。", level: "Normal" },
+          {
+            type: "dare",
+            content: "對著窗外大喊「我是大笨蛋」。",
+            level: "Easy",
+          },
+          {
+            type: "dare",
+            content: "跟在場一位異性十指緊扣一分鐘。",
+            level: "Normal",
+          },
+          { type: "dare", content: "公主抱在場一位異性。", level: "Hard" },
+          {
+            type: "dare",
+            content: "伏地挺身10下（可以在人身上）。",
+            level: "Hard",
+          },
+          { type: "dare", content: "跳一段性感的舞蹈。", level: "Normal" },
+          {
+            type: "dare",
+            content: "用嘴巴咬下左邊人身上的便利貼。",
+            level: "Hard",
+          },
+          { type: "dare", content: "發出曖昧的聲音10秒。", level: "Adult" },
+          { type: "dare", content: "親吻右邊人的手背。", level: "Normal" },
+          {
+            type: "dare",
+            content: "讓大家看你手機裡最近的一張自拍。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "模仿在場一個人的說話方式。",
+            level: "Easy",
+          },
+          { type: "dare", content: "對著鏡子猜拳直到贏為止。", level: "Easy" },
+          { type: "dare", content: "喝一杯加了鹽的可樂。", level: "Hard" },
+          {
+            type: "dare",
+            content: "讓在場的人幫你綁頭髮（或弄亂）。",
+            level: "Easy",
+          },
+          { type: "dare", content: "跟牆壁深情告白30秒。", level: "Easy" },
+          { type: "dare", content: "模仿便秘時的表情。", level: "Easy" },
+          {
+            type: "dare",
+            content: "用舌頭舔手肘（舔不到也要試）。",
+            level: "Easy",
+          },
+          {
+            type: "dare",
+            content: "讓右邊的人坐在你背上做伏地挺身。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "跟左邊的人對視30秒不能笑。",
+            level: "Normal",
+          },
+          { type: "dare", content: "把頭像換成鬼臉照一天。", level: "Hard" },
+          {
+            type: "dare",
+            content: "傳訊息給第10個聯絡人說「借我錢」。",
+            level: "Hard",
+          },
+          {
+            type: "dare",
+            content: "大聲朗讀手機裡最新的一則訊息。",
+            level: "Normal",
+          },
+          {
+            type: "dare",
+            content: "用屁股撞擊在場所有人的屁股。",
+            level: "Normal",
+          },
+          { type: "dare", content: "模仿高潮的叫聲。", level: "Adult" },
+          { type: "dare", content: "對著異性做頂胯動作10下。", level: "Adult" },
+          { type: "dare", content: "讓異性摸你的腹肌/肚子。", level: "Adult" },
+          { type: "dare", content: "親吻異性的鎖骨。", level: "Adult" },
+          {
+            type: "dare",
+            content: "用嘴巴解開異性的一顆扣子。",
+            level: "Adult",
+          },
+          { type: "dare", content: "在異性耳邊吹氣。", level: "Adult" },
+          { type: "dare", content: "讓異性坐在你大腿上30秒。", level: "Adult" },
+          { type: "dare", content: "隔著衣服親吻異性的胸口。", level: "Adult" },
+          { type: "dare", content: "表演吃香蕉（或是手指）。", level: "Adult" },
+          { type: "dare", content: "讓異性幫你脫襪子。", level: "Adult" },
+          { type: "dare", content: "用嘴巴餵異性吃東西。", level: "Adult" },
+          { type: "dare", content: "躺在地上讓異性跨過去。", level: "Adult" },
+          {
+            type: "dare",
+            content: "模仿AV女優/男優的經典台詞。",
+            level: "Adult",
+          },
+          { type: "dare", content: "讓異性打你的屁股一下。", level: "Adult" },
+          {
+            type: "dare",
+            content: "握住異性的手放在自己胸口。",
+            level: "Adult",
+          },
+          { type: "dare", content: "跟異性磨鼻子10秒。", level: "Adult" },
+          {
+            type: "dare",
+            content: "用很色的語氣說「我要吃掉你」。",
+            level: "Adult",
+          },
+          {
+            type: "dare",
+            content: "讓異性檢查你的內衣/內褲顏色。",
+            level: "Adult",
+          },
+          { type: "dare", content: "對著異性跳M字腿。", level: "Adult" },
+          { type: "dare", content: "含著冰塊親吻異性的手。", level: "Adult" },
+          { type: "dare", content: "讓異性聞你的脖子。", level: "Adult" },
+          {
+            type: "dare",
+            content: "用領帶或皮帶輕輕綁住異性的手。",
+            level: "Adult",
+          },
         ],
         state: {
           players: [],
@@ -2389,8 +2674,10 @@
             duration: 5000,
             difficultyFilter: "All",
             segmentCounts: { truth: 10, dare: 10, pass: 2 },
+            noRepeat: false,
           },
         },
+        tempSelected: [],
         init() {
           // Default init
           this.state.questions = [...this.defaultDB];
@@ -2413,6 +2700,10 @@
                 name,
                 weight: 1,
               }));
+            }
+            // Migration for noRepeat
+            if (this.state.settings.noRepeat === undefined) {
+              this.state.settings.noRepeat = false;
             }
           }
         },
@@ -2515,7 +2806,10 @@
         resetStats() {
           this.state.stats = {};
           this.saveToStorage();
-          NetworkModule.pushUpdate("stats", this.state.stats);
+          if (NetworkModule.roomId !== "LOCAL" && NetworkModule.roomRef) {
+            NetworkModule.roomRef.child("stats").remove();
+          }
+          UIModule.renderLeaderboard();
         },
         updateSettings() {
           this.saveToStorage();
@@ -2550,22 +2844,57 @@
         getRandomPlayer() {
           if (this.state.players.length === 0) return "匿名玩家";
 
-          const totalWeight = this.state.players.reduce(
+          let candidates = this.state.players;
+
+          // No Repeat Logic
+          if (this.state.settings.noRepeat) {
+            // Filter out players who are already in tempSelected
+            // Ensure tempSelected only contains current valid players
+            this.tempSelected = this.tempSelected.filter((name) =>
+              this.state.players.some((p) => p.name === name)
+            );
+
+            const unpicked = this.state.players.filter(
+              (p) => !this.tempSelected.includes(p.name)
+            );
+
+            if (unpicked.length === 0) {
+              // All picked, reset
+              this.tempSelected = [];
+              candidates = this.state.players;
+            } else {
+              candidates = unpicked;
+            }
+          }
+
+          const totalWeight = candidates.reduce(
             (sum, p) => sum + (p.weight || 0),
             0
           );
-          if (totalWeight <= 0)
-            return this.state.players[
-              Math.floor(Math.random() * this.state.players.length)
-            ].name;
+          let selectedName = "";
 
-          let r = Math.random() * totalWeight;
-          for (const p of this.state.players) {
-            const w = p.weight || 0;
-            if (r < w) return p.name;
-            r -= w;
+          if (totalWeight <= 0) {
+            selectedName =
+              candidates[Math.floor(Math.random() * candidates.length)].name;
+          } else {
+            let r = Math.random() * totalWeight;
+            for (const p of candidates) {
+              const w = p.weight || 0;
+              if (r < w) {
+                selectedName = p.name;
+                break;
+              }
+              r -= w;
+            }
+            if (!selectedName)
+              selectedName = candidates[candidates.length - 1].name;
           }
-          return this.state.players[this.state.players.length - 1].name;
+
+          if (this.state.settings.noRepeat) {
+            this.tempSelected.push(selectedName);
+          }
+
+          return selectedName;
         },
         aiGenerate() {
           const types = ["truth", "dare"];
@@ -2897,6 +3226,12 @@
               DataModule.updateSettings();
             });
           });
+          document
+            .getElementById("check-no-repeat")
+            .addEventListener("change", (e) => {
+              DataModule.state.settings.noRepeat = e.target.checked;
+              DataModule.updateSettings();
+            });
           // Import/Export
           document
             .getElementById("btn-export")
@@ -2909,6 +3244,11 @@
           document
             .getElementById("btn-reset-default")
             .addEventListener("click", () => DataModule.resetToDefault());
+          document
+            .getElementById("btn-leave-room")
+            .addEventListener("click", () => {
+              if (confirm("確定要退出房間嗎？")) NetworkModule.leaveRoom();
+            });
           document
             .getElementById("file-import")
             .addEventListener("change", (e) => {
@@ -3024,18 +3364,24 @@
         },
         renderPlayerList() {
           const list = document.getElementById("player-list");
-          list.innerHTML = "";
+          let html = "";
           DataModule.state.players.forEach((p, i) => {
             const isHost = NetworkModule.isHost;
+            const weight = p.weight !== undefined ? p.weight : 1;
             const weightInput = isHost
-              ? `<input type="number" class="weight-input" value="${p.weight}" min="0" max="999" onchange="DataModule.updatePlayerWeight(${i}, this.value)" onclick="event.stopPropagation()">`
-              : `<span style="font-size:0.8rem; color:#888; margin-right:5px">權重: ${p.weight}</span>`;
+              ? `<div style="display:flex; align-items:center; margin-right:5px" onclick="event.stopPropagation()">
+                   <input type="range" style="width:80px; accent-color:var(--gold); margin-right:5px; cursor:pointer; padding:0" value="${weight}" min="0" max="10" 
+                   oninput="document.getElementById('w-val-${i}').innerText=this.value" 
+                   onchange="DataModule.updatePlayerWeight(${i}, this.value)">
+                   <span id="w-val-${i}" style="width:20px; text-align:center; color:var(--gold); font-weight:bold">${weight}</span>
+                 </div>`
+              : `<span style="font-size:0.8rem; color:#888; margin-right:5px">權重: ${weight}</span>`;
 
             const delBtn = isHost
               ? `<button class="delete-btn" onclick="DataModule.removePlayer(${i})"><i class="material-icons">delete</i></button>`
               : "";
 
-            list.innerHTML += `<div class="list-item">
+            html += `<div class="list-item">
                 <div style="display:flex; align-items:center; flex:1">
                     <i class="material-icons" style="font-size:16px; margin-right:5px">person</i> 
                     <span>${p.name}</span>
@@ -3043,6 +3389,7 @@
                 <div style="display:flex; align-items:center; gap:5px">${weightInput}${delBtn}</div>
             </div>`;
           });
+          list.innerHTML = html;
           document.getElementById("player-count").innerText =
             DataModule.state.players.length;
         },
@@ -3103,6 +3450,7 @@
           document.getElementById("duration-range").value = s.duration / 1000;
           document.getElementById("game-difficulty-filter").value =
             s.difficultyFilter;
+          document.getElementById("check-no-repeat").checked = !!s.noRepeat;
         },
         showResult(type, content, player) {
           document.getElementById("player-name-slot").innerText = player;

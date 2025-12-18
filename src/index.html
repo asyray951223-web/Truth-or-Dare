@@ -1513,17 +1513,6 @@
             // 將 Firebase 的物件結構 { key: {name: "A"}, key2: {name: "B"} } 轉回陣列 ["A", "B"]
             // v3.1 Update: Sync objects {name, weight}
             const serverPlayersObj = val.players || {};
-
-            // Security Check: If I'm a guest and not in the list, I've been kicked
-            if (!this.isHost && this.roomId !== "LOCAL") {
-              const safeName = this.nickname.replace(/[.$#\[\]\/]/g, "_");
-              if (!serverPlayersObj[safeName]) {
-                alert("你已被房主移除房間");
-                this.leaveRoom();
-                return;
-              }
-            }
-
             const serverPlayersList = Object.values(serverPlayersObj).map(
               (p) => ({
                 name: p.name,
@@ -1537,13 +1526,6 @@
             ) {
               DataModule.state.players = serverPlayersList;
               UIModule.renderPlayerList();
-              if (
-                document
-                  .getElementById("panel-leaderboard")
-                  .classList.contains("active")
-              ) {
-                UIModule.renderLeaderboard();
-              }
             }
 
             // Sync Questions
@@ -1572,12 +1554,9 @@
             }
 
             // Sync Stats
-            const serverStats = val.stats || {};
-            if (
-              JSON.stringify(DataModule.state.stats) !==
-              JSON.stringify(serverStats)
-            ) {
-              DataModule.state.stats = serverStats;
+            if (val.stats) {
+              DataModule.state.stats = val.stats;
+              // Only re-render if active panel is leaderboard to save performance
               if (
                 document
                   .getElementById("panel-leaderboard")
@@ -2750,13 +2729,6 @@
             this.state.players.push({ name: name, weight: 1 });
             this.saveToStorage();
             UIModule.renderPlayerList();
-            if (
-              document
-                .getElementById("panel-leaderboard")
-                .classList.contains("active")
-            ) {
-              UIModule.renderLeaderboard();
-            }
             return true;
           }
           return false;
@@ -2775,13 +2747,6 @@
             this.state.players.splice(index, 1);
             this.saveToStorage();
             UIModule.renderPlayerList();
-            if (
-              document
-                .getElementById("panel-leaderboard")
-                .classList.contains("active")
-            ) {
-              UIModule.renderLeaderboard();
-            }
           }
         },
         updatePlayerWeight(index, weight) {
@@ -2838,10 +2803,7 @@
         resetStats() {
           this.state.stats = {};
           this.saveToStorage();
-          if (NetworkModule.roomId !== "LOCAL" && NetworkModule.roomRef) {
-            NetworkModule.roomRef.child("stats").remove();
-          }
-          UIModule.renderLeaderboard();
+          NetworkModule.pushUpdate("stats", this.state.stats);
         },
         updateSettings() {
           this.saveToStorage();
@@ -3462,13 +3424,7 @@
         renderLeaderboard() {
           const list = document.getElementById("leaderboard-list");
           list.innerHTML = "";
-
-          const combinedStats = { ...DataModule.state.stats };
-          DataModule.state.players.forEach((p) => {
-            if (combinedStats[p.name] === undefined) combinedStats[p.name] = 0;
-          });
-
-          const stats = Object.entries(combinedStats)
+          const stats = Object.entries(DataModule.state.stats)
             .map(([k, v]) => ({ name: k, count: v }))
             .sort((a, b) => b.count - a.count);
           stats.forEach((p, i) => {

@@ -3210,10 +3210,16 @@
           // Settings Inputs
           ["range-truth", "range-dare", "range-pass"].forEach((id) => {
             document.getElementById(id).addEventListener("input", () => {
+              const t = document.getElementById("range-truth").value;
+              const d = document.getElementById("range-dare").value;
+              const p = document.getElementById("range-pass").value;
+              document.getElementById("val-truth").innerText = t;
+              document.getElementById("val-dare").innerText = d;
+              document.getElementById("val-pass").innerText = p;
               DataModule.state.settings.segmentCounts = {
-                truth: document.getElementById("range-truth").value,
-                dare: document.getElementById("range-dare").value,
-                pass: document.getElementById("range-pass").value,
+                truth: t,
+                dare: d,
+                pass: p,
               };
               WheelModule.generateSegments();
               WheelModule.draw();
@@ -3437,6 +3443,10 @@
         },
         renderSettingsValues() {
           const s = DataModule.state.settings;
+          document.getElementById("val-truth").innerText =
+            s.segmentCounts.truth;
+          document.getElementById("val-dare").innerText = s.segmentCounts.dare;
+          document.getElementById("val-pass").innerText = s.segmentCounts.pass;
           document.getElementById("range-truth").value = s.segmentCounts.truth;
           document.getElementById("range-dare").value = s.segmentCounts.dare;
           document.getElementById("range-pass").value = s.segmentCounts.pass;

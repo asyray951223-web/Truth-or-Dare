@@ -2224,9 +2224,16 @@
           overlay.className = "";
           void overlay.offsetWidth; // Trigger reflow
 
-          if (type === "truth") overlay.classList.add("flash-truth");
-          else if (type === "dare") overlay.classList.add("flash-dare");
-          else if (type === "pass") overlay.classList.add("flash-pass");
+          if (type === "truth") {
+            overlay.classList.add("flash-truth");
+            if (navigator.vibrate) navigator.vibrate(200);
+          } else if (type === "dare") {
+            overlay.classList.add("flash-dare");
+            if (navigator.vibrate) navigator.vibrate(200);
+          } else if (type === "pass") {
+            overlay.classList.add("flash-pass");
+            if (navigator.vibrate) navigator.vibrate(100);
+          }
         },
       };
 

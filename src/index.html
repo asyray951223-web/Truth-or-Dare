@@ -21,871 +21,11 @@
       src="https://unpkg.com/html5-qrcode"
       type="text/javascript"
     ></script>
-
-    <style>
-      /* =========================================
-           CSS Variables & Base (v1.0 Style)
-           ========================================= */
-      :root {
-        --gold: #d4af37;
-        --gold-light: #f4df87;
-        --gold-dark: #aa8c2c;
-        --black: #121212;
-        --dark-grey: #1e1e1e;
-        --text-main: #e0e0e0;
-        --silver: #c0c0c0;
-        --bronze: #cd7f32;
-        --adult-pink: #e91e63;
-        --shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
-        --transition: all 0.3s ease;
-        --sidebar-width: 240px;
-        --sidebar-width-collapsed: 80px;
-      }
-
-      * {
-        box-sizing: border-box;
-        user-select: none;
-        -webkit-tap-highlight-color: transparent;
-      }
-      body {
-        font-family: "Noto Sans TC", sans-serif;
-        background: radial-gradient(circle at center, #2a2a2a 0%, #000000 100%);
-        color: var(--text-main);
-        margin: 0;
-        padding: 0;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        position: relative;
-      }
-      body::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background-image: repeating-linear-gradient(
-          45deg,
-          rgba(212, 175, 55, 0.05) 0px,
-          rgba(212, 175, 55, 0.05) 1px,
-          transparent 1px,
-          transparent 20px
-        );
-        z-index: -1;
-        pointer-events: none;
-      }
-
-      /* =========================================
-           Login Overlay (v2.0 Feature)
-           ========================================= */
-      #login-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.98);
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        transition: opacity 0.5s;
-      }
-      #login-overlay.hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-      .login-box {
-        background: var(--dark-grey);
-        padding: 40px;
-        border-radius: 20px;
-        border: 2px solid var(--gold);
-        text-align: center;
-        max-width: 400px;
-        width: 90%;
-        box-shadow: 0 0 50px rgba(212, 175, 55, 0.3);
-      }
-      .login-title {
-        font-size: 2rem;
-        color: var(--gold);
-        margin-bottom: 30px;
-        font-weight: bold;
-        text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
-      }
-      .mode-btn {
-        display: block;
-        width: 100%;
-        padding: 15px;
-        margin: 10px 0;
-        border: 1px solid var(--gold);
-        background: transparent;
-        color: var(--gold);
-        font-size: 1.1rem;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.3s;
-      }
-      .mode-btn:hover {
-        background: var(--gold);
-        color: #000;
-      }
-      .mode-btn.primary {
-        background: linear-gradient(to right, var(--gold-dark), var(--gold));
-        color: #000;
-        border: none;
-        font-weight: bold;
-      }
-
-      /* Join Group Responsive Layout */
-      .join-group {
-        display: flex;
-        gap: 10px;
-        margin: 10px 0;
-      }
-      .btn-scan {
-        width: 50px;
-        padding: 0 !important;
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-      }
-      .btn-join {
-        flex: 1;
-        margin: 0 !important;
-      }
-      @media (max-width: 1023px) {
-        .login-box {
-          padding: 25px 15px;
-        }
-        .join-group {
-          flex-wrap: wrap;
-        }
-        .btn-join {
-          flex: 1 1 100%; /* Full width on mobile */
-        }
-      }
-
-      /* =========================================
-           Layout & Components
-           ========================================= */
-      header {
-        text-align: center;
-        padding: 15px;
-        border-bottom: 2px solid var(--gold-dark);
-        background: rgba(0, 0, 0, 0.8);
-        box-shadow: var(--shadow);
-        z-index: 10;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-      }
-      #menu-toggle {
-        display: none;
-        position: absolute;
-        left: 20px;
-        background: none;
-        border: none;
-        color: var(--gold);
-        cursor: pointer;
-        font-size: 24px;
-      }
-
-      /* Status Bar (v2.0 Feature) */
-      .status-bar {
-        position: absolute;
-        top: 50%;
-        right: 15px;
-        transform: translateY(-50%);
-        z-index: 20;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        background: rgba(0, 0, 0, 0.6);
-        padding: 5px 15px;
-        border-radius: 20px;
-        border: 1px solid #333;
-      }
-      .status-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: #666;
-        transition: all 0.3s;
-      }
-      .status-dot.online {
-        background: #4caf50;
-        box-shadow: 0 0 8px #4caf50;
-      }
-      .room-code {
-        color: var(--gold);
-        font-weight: bold;
-        font-family: monospace;
-        font-size: 1rem;
-        letter-spacing: 1px;
-      }
-      #qr-btn {
-        background: none;
-        border: none;
-        color: var(--gold);
-        cursor: pointer;
-        padding: 0 5px;
-        display: none; /* Hidden by default */
-      }
-
-      /* Scanner & QR Modal */
-      .modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.95);
-        z-index: 2000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .modal-overlay.hidden {
-        display: none;
-      }
-      .modal-box {
-        width: 90%;
-        max-width: 400px;
-        background: var(--dark-grey);
-        padding: 20px;
-        border-radius: 10px;
-        border: 1px solid var(--gold);
-        text-align: center;
-        position: relative;
-      }
-      #reader {
-        width: 100%;
-        background: #000;
-        margin-bottom: 15px;
-        border-radius: 5px;
-        overflow: hidden;
-      }
-      #qr-image {
-        width: 200px;
-        height: 200px;
-        margin: 10px auto;
-        display: block;
-      }
-
-      header h1 {
-        margin: 0;
-        color: var(--gold);
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-        font-size: 1.5rem;
-      }
-
-      nav {
-        display: flex;
-        justify-content: space-around;
-        background: var(--dark-grey);
-        padding: 10px 0;
-        border-top: 2px solid var(--gold-dark);
-        z-index: 10;
-      }
-      nav .nav-btn {
-        background: none;
-        border: none;
-        color: #666;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        cursor: pointer;
-        transition: var(--transition);
-      }
-      nav .nav-btn i {
-        font-size: 24px;
-        margin-bottom: 4px;
-      }
-      nav .nav-btn span {
-        font-size: 12px;
-      }
-      nav .nav-btn.active,
-      nav .nav-btn:hover {
-        color: var(--gold);
-        text-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
-      }
-
-      main {
-        flex: 1;
-        position: relative;
-        overflow: hidden;
-        width: 100%;
-        max-width: 600px;
-        margin: 0 auto;
-        display: flex;
-        justify-content: center;
-      }
-      .panel {
-        position: absolute;
-        inset: 0;
-        padding: 20px;
-        overflow-y: auto;
-        opacity: 0;
-        transform: translateX(20px);
-        pointer-events: none;
-        transition: var(--transition);
-        width: 100%;
-        max-width: 800px;
-        margin: 0 auto;
-        display: none;
-      }
-      .panel.active {
-        opacity: 1;
-        transform: translateX(0);
-        pointer-events: auto;
-        z-index: 5;
-        display: block;
-      }
-
-      .wheel-container {
-        position: relative;
-        width: 300px;
-        height: 300px;
-        margin: 20px auto;
-        border-radius: 50%;
-        padding: 8px;
-        background: conic-gradient(
-          #ff0000,
-          #ff7f00,
-          #ffff00,
-          #00ff00,
-          #0000ff,
-          #4b0082,
-          #9400d3,
-          #ff0000
-        );
-        box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
-      }
-      .wheel-container canvas {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-      }
-      .pointer {
-        position: absolute;
-        top: -40px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 40px;
-        height: 50px;
-        z-index: 2;
-        filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.5));
-      }
-      .pointer::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          135deg,
-          #ffffff 0%,
-          #e0e0e0 50%,
-          #b0b0b0 100%
-        );
-        clip-path: polygon(
-          30% 0%,
-          70% 0%,
-          70% 50%,
-          100% 50%,
-          50% 100%,
-          0% 50%,
-          30% 50%
-        );
-      }
-      .center-circle {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 50px;
-        height: 50px;
-        background: radial-gradient(circle, var(--gold-light), var(--gold));
-        border-radius: 50%;
-        border: 2px solid #fff;
-        z-index: 2;
-        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
-      }
-
-      .game-info {
-        text-align: center;
-        margin-top: 20px;
-        background: rgba(0, 0, 0, 0.6);
-        padding: 15px;
-        border-radius: 10px;
-        border: 1px solid var(--gold-dark);
-        transition: background 0.5s ease;
-      }
-      .current-player {
-        color: var(--gold-light);
-        font-size: 1.2rem;
-        margin-bottom: 10px;
-      }
-      .result-box {
-        min-height: 60px;
-        font-size: 1.1rem;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-      }
-
-      .btn-main {
-        background: linear-gradient(to bottom, var(--gold), var(--gold-dark));
-        color: #000;
-        border: none;
-        padding: 15px 40px;
-        font-size: 1.2rem;
-        font-weight: bold;
-        border-radius: 30px;
-        margin: 20px auto;
-        display: block;
-        width: 80%;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
-        transition: transform 0.1s;
-      }
-      .btn-main:active {
-        transform: scale(0.95);
-      }
-      .btn-main:disabled {
-        filter: grayscale(1);
-        cursor: not-allowed;
-        opacity: 0.5;
-      }
-      .btn-small {
-        background: var(--gold-dark);
-        color: #fff;
-        border: none;
-        padding: 0 15px;
-        border-radius: 5px;
-        height: 38px;
-        cursor: pointer;
-      }
-      .btn-small.btn-danger {
-        background: #8b0000;
-      }
-      .btn-small.btn-ai {
-        background: linear-gradient(45deg, #1e90ff, #00bfff);
-        color: white;
-      }
-      .btn-small.btn-outline {
-        background: transparent;
-        border: 1px solid var(--gold);
-        color: var(--gold);
-      }
-      .btn-small:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      .section-title {
-        color: var(--gold);
-        border-bottom: 1px solid var(--gold-dark);
-        padding-bottom: 5px;
-        margin-bottom: 15px;
-        font-size: 1.1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .input-group {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 15px;
-      }
-      .input-group.input-group--options {
-        margin-top: -10px;
-      }
-      .input-group.input-group--options label {
-        color: #888;
-        font-size: 0.8rem;
-        align-self: center;
-      }
-      input,
-      select {
-        flex: 1;
-        background: #f9f9f9;
-        border: 1px solid var(--gold-dark);
-        color: #000;
-        padding: 10px;
-        border-radius: 5px;
-        font-family: inherit;
-        font-weight: 500;
-      }
-
-      .list-container {
-      }
-      .list-item {
-        background: rgba(255, 255, 255, 0.05);
-        padding: 10px;
-        margin-bottom: 8px;
-        border-radius: 5px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-left: 3px solid transparent;
-      }
-      .list-item:hover {
-        background: rgba(255, 255, 255, 0.1);
-      }
-      .list-item.truth {
-        border-left-color: #4caf50;
-      }
-      .list-item.dare {
-        border-left-color: #ff5722;
-      }
-      .list-item.pass {
-        border-left-color: #c0c0c0;
-      }
-      .list-item .tag {
-        font-size: 0.7rem;
-        padding: 2px 6px;
-        border-radius: 4px;
-        margin-right: 5px;
-        background: #333;
-        color: #fff;
-      }
-      .list-item .tag.level-adult {
-        background: var(--adult-pink);
-        font-weight: bold;
-      }
-      .delete-btn {
-        background: none;
-        border: none;
-        color: #ff6b6b;
-        cursor: pointer;
-      }
-
-      /* Host/Guest Controls */
-      .guest-hidden {
-        display: none !important;
-      }
-      .host-only {
-      } /* Helper class for JS logic */
-
-      /* Rank Styles */
-      .rank-1 {
-        border-left: 3px solid var(--gold);
-        background: linear-gradient(
-          90deg,
-          rgba(212, 175, 55, 0.2),
-          transparent
-        );
-      }
-      .rank-1 .rank-icon {
-        color: var(--gold);
-        font-size: 1.2rem;
-      }
-      .rank-2 {
-        border-left: 3px solid var(--silver);
-        background: linear-gradient(
-          90deg,
-          rgba(192, 192, 192, 0.15),
-          transparent
-        );
-      }
-      .rank-2 .rank-icon {
-        color: var(--silver);
-        font-size: 1.2rem;
-      }
-      .rank-3 {
-        border-left: 3px solid var(--bronze);
-        background: linear-gradient(
-          90deg,
-          rgba(205, 127, 50, 0.15),
-          transparent
-        );
-      }
-      .rank-3 .rank-icon {
-        color: var(--bronze);
-        font-size: 1.2rem;
-      }
-      .rank-count {
-        font-weight: bold;
-        color: var(--gold);
-        margin-left: 10px;
-      }
-
-      /* Reaction Floating Menu */
-      .reaction-wrapper {
-        position: fixed;
-        right: 20px;
-        bottom: 120px;
-        z-index: 90;
-        display: flex;
-        flex-direction: column-reverse;
-        align-items: center;
-        gap: 10px;
-      }
-      .reaction-menu {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        background: rgba(0, 0, 0, 0.8);
-        padding: 8px;
-        border-radius: 30px;
-        border: 1px solid var(--gold-dark);
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        transform-origin: bottom center;
-      }
-      .reaction-menu.hidden {
-        opacity: 0;
-        transform: scale(0.5) translateY(20px);
-        pointer-events: none;
-        height: 0;
-        padding: 0;
-        overflow: hidden;
-      }
-      .reaction-toggle {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        background: var(--gold);
-        border: none;
-        color: #000;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: transform 0.2s;
-      }
-      .reaction-toggle:active {
-        transform: scale(0.9);
-      }
-
-      .reaction-btn {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid var(--gold-dark);
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        font-size: 1.2rem;
-        cursor: pointer;
-        transition: transform 0.1s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .reaction-btn:active {
-        transform: scale(0.9);
-        background: var(--gold);
-      }
-
-      /* Timer Styles */
-      .timer-display-box {
-        text-align: center;
-        margin: 30px 0;
-      }
-      .timer-time {
-        font-size: 5rem;
-        font-weight: 700;
-        color: var(--gold);
-        text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-        font-variant-numeric: tabular-nums;
-        line-height: 1;
-      }
-      .timer-controls {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        margin-top: 20px;
-      }
-      .timer-btn-circle {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        border: 2px solid var(--gold);
-        background: rgba(0, 0, 0, 0.5);
-        color: var(--gold);
-        font-size: 24px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-      }
-      .timer-btn-circle:hover {
-        background: var(--gold);
-        color: #000;
-        box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
-      }
-      .timer-presets {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin-top: 20px;
-        flex-wrap: wrap;
-      }
-      .timer-blink {
-        animation: blink 1s infinite;
-        color: #ff5722;
-      }
-      @keyframes blink {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.3;
-        }
-      }
-
-      .difficulty-tabs {
-        display: flex;
-        margin-bottom: 10px;
-        background: #222;
-        border-radius: 5px;
-        padding: 2px;
-      }
-      .difficulty-tabs .diff-tab {
-        flex: 1;
-        text-align: center;
-        padding: 8px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        color: #888;
-      }
-      .difficulty-tabs .diff-tab.active {
-        background: var(--gold-dark);
-        color: #fff;
-        border-radius: 4px;
-      }
-
-      .slider-container {
-        margin-bottom: 20px;
-      }
-      .slider-container label {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 5px;
-        color: #aaa;
-      }
-      .slider-container input[type="range"] {
-        width: 100%;
-        cursor: pointer;
-        accent-color: var(--gold);
-      }
-      .slider-container select {
-        width: 100%;
-      }
-
-      /* Shake Animation */
-      @keyframes shake {
-        0% {
-          transform: translate(1px, 1px) rotate(0deg);
-        }
-        10% {
-          transform: translate(-1px, -2px) rotate(-1deg);
-        }
-        20% {
-          transform: translate(-3px, 0px) rotate(1deg);
-        }
-        30% {
-          transform: translate(3px, 2px) rotate(0deg);
-        }
-        40% {
-          transform: translate(1px, -1px) rotate(1deg);
-        }
-        50% {
-          transform: translate(-1px, 2px) rotate(-1deg);
-        }
-        60% {
-          transform: translate(-3px, 1px) rotate(0deg);
-        }
-        70% {
-          transform: translate(3px, 1px) rotate(-1deg);
-        }
-        80% {
-          transform: translate(-1px, -1px) rotate(1deg);
-        }
-        90% {
-          transform: translate(1px, 2px) rotate(0deg);
-        }
-        100% {
-          transform: translate(1px, -2px) rotate(-1deg);
-        }
-      }
-      .shake-screen {
-        animation: shake 0.5s;
-        animation-iteration-count: infinite;
-      }
-
-      /* Danmaku Layer */
-      #danmaku-layer {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        z-index: 9999;
-        overflow: hidden;
-      }
-      .danmaku-item {
-        position: absolute;
-        bottom: -50px;
-        font-size: 2rem;
-        animation: floatUp 4s linear forwards;
-        opacity: 0.8;
-        text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-      }
-      @keyframes floatUp {
-        0% {
-          transform: translateY(0) scale(1);
-          opacity: 1;
-        }
-        100% {
-          transform: translateY(-100vh) scale(1.5);
-          opacity: 0;
-        }
-      }
-
-      @media (min-width: 1024px) {
-        body {
-          display: grid;
-          grid-template-columns: var(--sidebar-width) 1fr;
-          grid-template-rows: auto 1fr;
-          grid-template-areas: "sidebar header" "sidebar main";
-        }
-        nav {
-          grid-area: sidebar;
-          flex-direction: column;
-          justify-content: flex-start;
-          height: 100vh;
-          border-top: none;
-          border-right: 2px solid var(--gold-dark);
-          padding-top: 20px;
-        }
-        header {
-          grid-area: header;
-          padding-left: 0;
-          justify-content: center;
-        }
-        main {
-          grid-area: main;
-          padding: 0 40px;
-        }
-        #menu-toggle {
-          display: block;
-        }
-        nav .nav-btn {
-          flex-direction: row;
-          padding: 18px 30px;
-          gap: 20px;
-        }
-        body.sidebar-collapsed {
-          grid-template-columns: var(--sidebar-width-collapsed) 1fr;
-        }
-        body.sidebar-collapsed nav .nav-btn span {
-          display: none;
-        }
-        body.sidebar-collapsed nav .nav-btn {
-          justify-content: center;
-          padding: 18px 0;
-        }
-      }
-    </style>
+    <script src="questions_easy.js"></script>
+    <script src="questions_normal.js"></script>
+    <script src="questions_hard.js"></script>
+    <script src="questions_adult.js"></script>
+    <link href="style.css" rel="stylesheet" />
   </head>
   <body>
     <div id="login-overlay">
@@ -1168,37 +308,46 @@
       <section id="panel-settings" class="panel">
         <div class="section-title">轉盤配置 (Host Only)</div>
         <div class="slider-container">
-          <label>真心話格數 <span id="val-truth">10</span></label>
-          <input
-            type="range"
-            id="range-truth"
-            min="0"
-            max="50"
-            value="10"
-            class="host-control"
-          />
+          <label>真心話格數</label>
+          <div class="range-wrapper">
+            <input
+              type="range"
+              id="range-truth"
+              min="0"
+              max="50"
+              value="10"
+              class="host-control"
+            />
+            <output id="val-truth" class="range-bubble">10</output>
+          </div>
         </div>
         <div class="slider-container">
-          <label>大冒險格數 <span id="val-dare">10</span></label>
-          <input
-            type="range"
-            id="range-dare"
-            min="0"
-            max="50"
-            value="10"
-            class="host-control"
-          />
+          <label>大冒險格數</label>
+          <div class="range-wrapper">
+            <input
+              type="range"
+              id="range-dare"
+              min="0"
+              max="50"
+              value="10"
+              class="host-control"
+            />
+            <output id="val-dare" class="range-bubble">10</output>
+          </div>
         </div>
         <div class="slider-container">
-          <label>Pass 格數 <span id="val-pass">2</span></label>
-          <input
-            type="range"
-            id="range-pass"
-            min="0"
-            max="50"
-            value="2"
-            class="host-control"
-          />
+          <label>Pass 格數</label>
+          <div class="range-wrapper">
+            <input
+              type="range"
+              id="range-pass"
+              min="0"
+              max="50"
+              value="2"
+              class="host-control"
+            />
+            <output id="val-pass" class="range-bubble">2</output>
+          </div>
         </div>
 
         <div class="section-title" style="margin-top: 30px">遊戲物理</div>
@@ -1593,7 +742,8 @@
                 UIModule.showResult(
                   val.currentResult.type,
                   val.currentResult.content,
-                  val.currentResult.player
+                  val.currentResult.player,
+                  val.currentResult.level
                 );
               }
             }
@@ -1672,994 +822,10 @@
       const DataModule = {
         key: "luxuryTOD_v3",
         defaultDB: [
-          {
-            type: "truth",
-            content: "你的手機桌布是什麼？為什麼選這張？",
-            level: "Easy",
-          },
-          {
-            type: "truth",
-            content: "如果中樂透頭獎，第一件事做什麼？",
-            level: "Easy",
-          },
-          {
-            type: "truth",
-            content: "你睡覺有什麼怪癖？（打呼、流口水、抱被子...）",
-            level: "Easy",
-          },
-          { type: "truth", content: "最近一次哭是因為什麼？", level: "Easy" },
-          { type: "truth", content: "覺得自己像哪種動物？", level: "Easy" },
-          { type: "truth", content: "你最怕哪種昆蟲或動物？", level: "Easy" },
-          {
-            type: "truth",
-            content: "如果能有超能力，你想要什麼？",
-            level: "Easy",
-          },
-          { type: "truth", content: "小時候的夢想職業是什麼？", level: "Easy" },
-          { type: "truth", content: "去KTV必點的一首歌是？", level: "Easy" },
-          {
-            type: "truth",
-            content: "洗澡時會做的最奇怪的一件事？",
-            level: "Easy",
-          },
-          { type: "truth", content: "身上哪個部位最滿意？", level: "Easy" },
-          {
-            type: "truth",
-            content: "說出一個你絕對不敢吃的食物。",
-            level: "Easy",
-          },
-          { type: "truth", content: "你覺得在場誰最自戀？", level: "Easy" },
-          { type: "truth", content: "上一次尿床是幾歲？", level: "Easy" },
-          { type: "truth", content: "買過最後悔的東西是什麼？", level: "Easy" },
-          {
-            type: "truth",
-            content: "如果明天是世界末日，你會吃什麼？",
-            level: "Easy",
-          },
-          { type: "truth", content: "你相信這世上有鬼嗎？", level: "Easy" },
-          { type: "truth", content: "做過最奇怪的夢是什麼？", level: "Easy" },
-          {
-            type: "truth",
-            content: "你的拿手菜是什麼？（泡麵也算）",
-            level: "Easy",
-          },
-          { type: "truth", content: "最喜歡的一部電影是？", level: "Easy" },
-          { type: "truth", content: "覺得自己心理年齡幾歲？", level: "Easy" },
-          {
-            type: "truth",
-            content: "如果可以跟在場一人交換身份一天，想選誰？",
-            level: "Easy",
-          },
-          {
-            type: "truth",
-            content: "說出一件你小時候做過的蠢事。",
-            level: "Easy",
-          },
-          {
-            type: "truth",
-            content: "你有多少天沒洗頭的最高紀錄？",
-            level: "Easy",
-          },
-          {
-            type: "truth",
-            content: "覺得在場誰看起來脾氣最好？",
-            level: "Easy",
-          },
-          { type: "dare", content: "模仿一種動物直到下一輪。", level: "Easy" },
-          { type: "dare", content: "做鬼臉自拍一張。", level: "Easy" },
-          { type: "dare", content: "模仿一種動物的叫聲。", level: "Easy" },
-          {
-            type: "dare",
-            content: "對著窗外大喊：「我是笨蛋！」",
-            level: "Easy",
-          },
-          {
-            type: "dare",
-            content: "原地轉 10 圈，然後走直線。",
-            level: "Easy",
-          },
-          {
-            type: "dare",
-            content: "讓大家看你手機裡第 5 張照片。",
-            level: "Easy",
-          },
-          {
-            type: "dare",
-            content: "用「喵」代替「我」說話三分鐘。",
-            level: "Easy",
-          },
-          { type: "dare", content: "模仿在場某個人的口頭禪。", level: "Easy" },
-          { type: "dare", content: "誇獎右邊的人三個優點。", level: "Easy" },
-          {
-            type: "dare",
-            content: "唱一首兒歌（例如兩隻老虎）。",
-            level: "Easy",
-          },
-          { type: "dare", content: "用屁股寫字（你的名字）。", level: "Easy" },
-          { type: "dare", content: "讓左邊的人幫你整理頭髮。", level: "Easy" },
-          { type: "dare", content: "雙手舉高維持一分鐘。", level: "Easy" },
-          {
-            type: "dare",
-            content: "和右邊的人十指緊扣 10 秒。",
-            level: "Easy",
-          },
-          { type: "dare", content: "模仿名模走台步一圈。", level: "Easy" },
-          { type: "dare", content: "講一個冷笑話。", level: "Easy" },
-          {
-            type: "dare",
-            content: "跟大家分享你最近的一個搜尋紀錄。",
-            level: "Easy",
-          },
-          { type: "dare", content: "對著鏡子稱讚自己 30 秒。", level: "Easy" },
-          { type: "dare", content: "學嬰兒哭 10 秒。", level: "Easy" },
-          { type: "dare", content: "喝一大杯水。", level: "Easy" },
-          { type: "dare", content: "讓大家檢查你的包包。", level: "Easy" },
-          {
-            type: "truth",
-            content: "曾經假裝生病請假去做什麼？",
-            level: "Normal",
-          },
-          { type: "truth", content: "覺得在場誰的衣品最差？", level: "Normal" },
-          {
-            type: "truth",
-            content: "手機裡最醜的一張照片是誰？（必須展示）",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "曾經偷看過誰的手機或日記？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "說出你在場最想吐槽的一個人。",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "在場這群人中，你覺得誰將來會最富有？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "曾經在游泳池偷尿尿過嗎？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "上一次放屁不小心崩出「東西」是什麼時候？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "如果你是異性，你會想跟自己交往嗎？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "曾經把別人送的禮物轉送出去嗎？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "覺得在場誰最容易被詐騙？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "說出一個你不想讓父母知道的秘密。",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "曾經在公共場合做過最丟臉的事？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "覺得哪個卡通人物最性感？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "如果要刪除一位在場好友的聯絡方式，選誰？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "曾經對老闆或老師說過最大的謊？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "洗衣服會把內褲跟襪子一起洗嗎？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "曾經偷吃過別人的東西沒承認嗎？",
-            level: "Normal",
-          },
-          { type: "truth", content: "覺得在場誰最會記仇？", level: "Normal" },
-          { type: "truth", content: "有沒有挖鼻孔吃下去過？", level: "Normal" },
-          {
-            type: "dare",
-            content: "隨機打給通訊錄一個人唱生日快樂歌。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "用屁股撞在場每個人的屁股一下。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "含著水哼一首歌讓大家猜。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "跳一段目前最紅的抖音舞。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "讓右邊的人搔你癢 10 秒鐘，不能笑。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "用你的手肘打字發一則動態。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "跪在椅子上模仿古代人請安。",
-            level: "Normal",
-          },
-          { type: "dare", content: "夾著鼻子說話一輪。", level: "Normal" },
-          {
-            type: "dare",
-            content: "把鞋子脫下來，聞一下並形容味道。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "去廚房特調一杯「怪味飲料」並喝一口。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "打給媽媽說：「我好像喜歡上同性了」（記得解釋）。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "讓在場每個人彈你額頭一下。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "假裝電視購物推銷你穿的襪子。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "對著Siri大喊「我好寂寞」。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "背著右邊的人繞房間一圈。",
-            level: "Normal",
-          },
-          { type: "truth", content: "說出你做過最違法的事情。", level: "Hard" },
-          {
-            type: "truth",
-            content: "這輩子最後悔的一件事是什麼？",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "如果生命只剩24小時，想對誰說什麼？",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "成長過程中，哪件事對你的價值觀影響最大？",
-            level: "Hard",
-          },
-          { type: "truth", content: "你最害怕失去什麼？", level: "Hard" },
-          {
-            type: "truth",
-            content: "曾經對朋友的另一半動過心嗎？",
-            level: "Hard",
-          },
-          { type: "truth", content: "覺得在場誰最難相處？", level: "Hard" },
-          {
-            type: "truth",
-            content: "如果必須跟在場一個人絕交，你會選誰？",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "上一次發自內心大哭是什麼時候？",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "你覺得自己最大的缺點是什麼？",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "有沒有哪個夢想是你已經放棄的？",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "讓大家瀏覽你的瀏覽器搜尋紀錄（最近3條）。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "去冰箱拿一顆冰塊，放在衣服裡直到融化。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "在一位異性身上做伏地挺身 5 下。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "讓大家看你手機相簿裡最新的那張截圖。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "跟大家分享你內褲的顏色和款式（必須檢查）。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "公主抱（或被公主抱）一位異性做深蹲 3 下。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "擁抱在你右邊的人 20 秒，什麼話都不能說。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "打電話給一位好久沒聯絡的朋友，說想他了。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "選一個人，幫他按摩 3 分鐘。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "在社群媒體上發一篇感謝文，感謝在場的一個人。",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "在場的異性中，誰最接近你的性幻想對象？",
-            level: "Adult",
-          },
-          {
-            type: "truth",
-            content: "第一次發生性行為是在幾歲？",
-            level: "Adult",
-          },
-          {
-            type: "truth",
-            content: "曾經有過一夜情嗎？或者想嘗試嗎？",
-            level: "Adult",
-          },
-          {
-            type: "truth",
-            content: "能夠接受的年齡差最大是多少？",
-            level: "Adult",
-          },
-          { type: "truth", content: "喜歡開燈還是關燈辦事？", level: "Adult" },
-          { type: "dare", content: "親吻你左邊玩家的脖子。", level: "Adult" },
-          {
-            type: "dare",
-            content: "選一位異性，用嘴對嘴傳遞一張衛生紙（或冰塊）。",
-            level: "Adult",
-          },
-          {
-            type: "dare",
-            content: "在在場異性中選一位，在他耳邊吹氣並說悄悄話。",
-            level: "Adult",
-          },
-          {
-            type: "dare",
-            content: "讓一位異性坐在你大腿上 1 分鐘。",
-            level: "Adult",
-          },
-          {
-            type: "dare",
-            content: "對著一位異性做出挑逗的吃香蕉（或手指）動作。",
-            level: "Adult",
-          },
-          {
-            type: "dare",
-            content: "讓右邊的人在你脖子上種草莓（或假裝用力吸一下）。",
-            level: "Adult",
-          },
-          // 🟢 New Easy Questions
-          {
-            type: "truth",
-            content: "最喜歡的季節是哪個？為什麼？",
-            level: "Easy",
-          },
-          { type: "truth", content: "你比較喜歡貓還是狗？", level: "Easy" },
-          { type: "truth", content: "早餐通常都吃什麼？", level: "Easy" },
-          {
-            type: "truth",
-            content: "最近看的一本書或漫畫是什麼？",
-            level: "Easy",
-          },
-          { type: "truth", content: "你最喜歡的顏色是什麼？", level: "Easy" },
-          { type: "truth", content: "你相信星座或算命嗎？", level: "Easy" },
-          { type: "truth", content: "喜歡喝咖啡還是茶？", level: "Easy" },
-          {
-            type: "truth",
-            content: "如果可以出國，現在最想去哪裡？",
-            level: "Easy",
-          },
-          {
-            type: "truth",
-            content: "假日通常喜歡做什麼休閒活動？",
-            level: "Easy",
-          },
-          {
-            type: "truth",
-            content: "有沒有收集什麼特別的東西？",
-            level: "Easy",
-          },
-          { type: "truth", content: "最喜歡的水果是什麼？", level: "Easy" },
-          { type: "truth", content: "喜歡爬山還是去海邊？", level: "Easy" },
-          { type: "truth", content: "敢不敢吃榴槤或臭豆腐？", level: "Easy" },
-          {
-            type: "truth",
-            content: "平時喜歡聽什麼類型的音樂？",
-            level: "Easy",
-          },
-          {
-            type: "truth",
-            content: "最近一次去便利商店買了什麼？",
-            level: "Easy",
-          },
-          { type: "dare", content: "做一個最醜的鬼臉。", level: "Easy" },
-          { type: "dare", content: "模仿貓叫三聲「喵喵喵」。", level: "Easy" },
-          { type: "dare", content: "站起來原地轉一圈。", level: "Easy" },
-          { type: "dare", content: "跟左邊的人擊掌。", level: "Easy" },
-          {
-            type: "dare",
-            content: "說一個笑話（不好笑也要笑）。",
-            level: "Easy",
-          },
-          { type: "dare", content: "閉眼單腳站立5秒。", level: "Easy" },
-          { type: "dare", content: "模仿機器人說話一句。", level: "Easy" },
-          { type: "dare", content: "對著空氣揮手說「嗨」。", level: "Easy" },
-          {
-            type: "dare",
-            content: "做出一個驚訝的表情維持5秒。",
-            level: "Easy",
-          },
-          { type: "dare", content: "模仿一種樂器的聲音。", level: "Easy" },
-          // 🟡 New Normal Questions
-          { type: "truth", content: "學生時代曾經作弊過嗎？", level: "Normal" },
-          {
-            type: "truth",
-            content: "上一次生氣是因為什麼事情？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "覺得自己最大的優點是什麼？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "覺得自己最大的缺點是什麼？",
-            level: "Normal",
-          },
-          { type: "truth", content: "曾經對好朋友說過謊嗎？", level: "Normal" },
-          {
-            type: "truth",
-            content: "有沒有暗戀過老師或長輩？",
-            level: "Normal",
-          },
-          { type: "truth", content: "第一次約會去了哪裡？", level: "Normal" },
-          {
-            type: "truth",
-            content: "最討厭的一種食物是什麼？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "曾經在電影院看電影看到睡著過嗎？",
-            level: "Normal",
-          },
-          { type: "truth", content: "敢不敢一個人看恐怖片？", level: "Normal" },
-          {
-            type: "truth",
-            content: "曾經迷路過最久的一次是多久？",
-            level: "Normal",
-          },
-          { type: "truth", content: "小時候最怕什麼東西？", level: "Normal" },
-          {
-            type: "truth",
-            content: "曾經不小心把別人的秘密說出去嗎？",
-            level: "Normal",
-          },
-          { type: "truth", content: "覺得在場誰最幽默好笑？", level: "Normal" },
-          {
-            type: "truth",
-            content: "如果能回到過去，最想回到幾歲？",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "用屁股在空中寫數字「8」。",
-            level: "Normal",
-          },
-          { type: "dare", content: "模仿在場某人的笑聲。", level: "Normal" },
-          {
-            type: "dare",
-            content: "讓右邊的人幫你整理頭髮（或摸頭）。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "對著手機鏡頭深情告白（對象隨意）。",
-            level: "Normal",
-          },
-          { type: "dare", content: "唱一首兒歌的副歌。", level: "Normal" },
-          {
-            type: "dare",
-            content: "用非慣用手寫下自己的名字。",
-            level: "Normal",
-          },
-          { type: "dare", content: "模仿殭屍跳三下。", level: "Normal" },
-          {
-            type: "dare",
-            content: "讓大家看你錢包裡有多少錢。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "隨機念出手機裡的一條簡訊內容。",
-            level: "Normal",
-          },
-          { type: "dare", content: "模仿新聞主播播報氣象。", level: "Normal" },
-          // 🔴 New Hard Questions
-          { type: "truth", content: "曾經背叛過好朋友嗎？", level: "Hard" },
-          {
-            type: "truth",
-            content: "說出一個你從未告訴過別人的秘密。",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "曾經偷過東西嗎（不論大小）？",
-            level: "Hard",
-          },
-          { type: "truth", content: "對在場誰的第一印象最差？", level: "Hard" },
-          {
-            type: "truth",
-            content: "曾經想過要整型嗎？想整哪裡？",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "覺得自己人生中最失敗的一件事？",
-            level: "Hard",
-          },
-          { type: "truth", content: "曾經腳踏兩條船嗎？", level: "Hard" },
-          {
-            type: "truth",
-            content: "討厭在場某人的某個行為嗎？請誠實。",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "曾經偷看過另一半的手機訊息嗎？",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "如果必須殺死一個人才能救自己，你會選誰（假設情境）？",
-            level: "Hard",
-          },
-          { type: "truth", content: "曾經後悔跟某任交往嗎？", level: "Hard" },
-          { type: "truth", content: "覺得自己是不是一個好人？", level: "Hard" },
-          {
-            type: "truth",
-            content: "曾經為了利益出賣過朋友嗎？",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "說出一個你最想刪除的黑歷史。",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "曾經在背後說過在場誰的壞話？",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "打電話給前任（或隨機異性朋友）說「我好想你」。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "讓左邊的人在你的臉上畫一個圖案。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content:
-              "隨機挑選通訊錄的一個人，傳送「我懷孕了/我讓別人懷孕了」。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "讓大家看你手機瀏覽器紀錄的最後一頁。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "模仿一種猥瑣的表情自拍並發到群組。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "跪在地上向在場的一個人求婚。",
-            level: "Hard",
-          },
-          { type: "dare", content: "讓右邊的人聞你的腋下。", level: "Hard" },
-          {
-            type: "dare",
-            content: "喝一杯特調飲料（大家隨意加料）。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "大聲喊出自己最丟臉的綽號。",
-            level: "Hard",
-          },
-          { type: "dare", content: "模仿高潮的表情10秒。", level: "Hard" },
-          // 🔞 New Adult Questions
-          { type: "truth", content: "喜歡什麼體位？", level: "Adult" },
-          { type: "truth", content: "曾經在公共場所做過嗎？", level: "Adult" },
-          {
-            type: "truth",
-            content: "最喜歡身體哪個部位被觸摸？",
-            level: "Adult",
-          },
-          {
-            type: "truth",
-            content: "曾經幻想過跟在場誰發生關係？",
-            level: "Adult",
-          },
-          { type: "truth", content: "接受一夜情嗎？", level: "Adult" },
-          {
-            type: "truth",
-            content: "曾經有過性幻想對象是老師或上司嗎？",
-            level: "Adult",
-          },
-          {
-            type: "truth",
-            content: "喜歡粗暴一點還是溫柔一點？",
-            level: "Adult",
-          },
-          { type: "truth", content: "曾經使用過情趣玩具嗎？", level: "Adult" },
-          { type: "truth", content: "覺得尺寸重要嗎？", level: "Adult" },
-          { type: "truth", content: "曾經在做的時候睡著嗎？", level: "Adult" },
-          { type: "truth", content: "喜歡口交嗎？", level: "Adult" },
-          { type: "truth", content: "曾經被抓包過自慰嗎？", level: "Adult" },
-          { type: "truth", content: "喜歡被綁起來嗎？", level: "Adult" },
-          { type: "truth", content: "曾經玩過角色扮演嗎？", level: "Adult" },
-          {
-            type: "truth",
-            content: "覺得性愛中最重要的環節是什麼？",
-            level: "Adult",
-          },
-          { type: "dare", content: "發出呻吟聲10秒。", level: "Adult" },
-          {
-            type: "dare",
-            content: "對著在場一位異性做出挑逗動作。",
-            level: "Adult",
-          },
-          {
-            type: "dare",
-            content: "讓在場一位異性摸你的大腿內側。",
-            level: "Adult",
-          },
-          {
-            type: "dare",
-            content: "模仿一種性愛姿勢（對著空氣）。",
-            level: "Adult",
-          },
-          {
-            type: "dare",
-            content: "脫掉一件衣服（外套或配件）。",
-            level: "Adult",
-          },
-          { type: "dare", content: "親吻在場一位異性的耳朵。", level: "Adult" },
-          {
-            type: "dare",
-            content: "讓在場一位異性坐在你身上做伏地挺身。",
-            level: "Adult",
-          },
-          {
-            type: "dare",
-            content: "用嘴巴解開在場一位異性的扣子。",
-            level: "Adult",
-          },
-          {
-            type: "dare",
-            content: "隔著衣服撫摸在場一位異性的胸部/腹肌。",
-            level: "Adult",
-          },
-          { type: "dare", content: "說一句你覺得最色的話。", level: "Adult" },
-          // 🟢 New Added Questions (v3.1 Expansion)
-          {
-            type: "truth",
-            content: "如果可以整型，你最想整哪裡？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "你覺得在場誰最適合當你的另一半？",
-            level: "Normal",
-          },
-          { type: "truth", content: "曾經被劈腿過嗎？", level: "Hard" },
-          {
-            type: "truth",
-            content: "如果一定要跟在場一個人接吻，你會選誰？",
-            level: "Hard",
-          },
-          {
-            type: "truth",
-            content: "你覺得自己性能力如何（1-10分）？",
-            level: "Adult",
-          },
-          { type: "truth", content: "最近一次DIY是什麼時候？", level: "Adult" },
-          {
-            type: "truth",
-            content: "看過最奇怪的A片類型是什麼？",
-            level: "Adult",
-          },
-          { type: "truth", content: "曾經在心裡偷偷詛咒過誰？", level: "Hard" },
-          { type: "truth", content: "你覺得在場誰最虛偽？", level: "Hard" },
-          { type: "truth", content: "有沒有欠錢不還過？", level: "Normal" },
-          {
-            type: "truth",
-            content: "上廁所完會看一眼排泄物嗎？",
-            level: "Easy",
-          },
-          { type: "truth", content: "洗澡會順便尿尿嗎？", level: "Easy" },
-          {
-            type: "truth",
-            content: "如果變成異性，第一件事想做什麼？",
-            level: "Easy",
-          },
-          {
-            type: "truth",
-            content: "最想刪除的一張照片是什麼？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "曾經對朋友的男/女朋友動心過嗎？",
-            level: "Hard",
-          },
-          { type: "truth", content: "說出一個你討厭的藝人。", level: "Normal" },
-          { type: "truth", content: "覺得在場誰最愛記仇？", level: "Normal" },
-          { type: "truth", content: "有沒有偷看過伴侶的手機？", level: "Hard" },
-          {
-            type: "truth",
-            content: "曾經跟不喜歡的人交往過嗎？",
-            level: "Hard",
-          },
-          { type: "truth", content: "初吻是在幾歲？", level: "Normal" },
-          { type: "truth", content: "最尷尬的一次約會經驗？", level: "Normal" },
-          { type: "truth", content: "有沒有被同性告白過？", level: "Normal" },
-          {
-            type: "truth",
-            content: "覺得自己哪個部位最性感？",
-            level: "Normal",
-          },
-          { type: "truth", content: "曾經裸睡過嗎？", level: "Easy" },
-          {
-            type: "truth",
-            content: "如果中了一億，會分給在場的人嗎？",
-            level: "Normal",
-          },
-          { type: "truth", content: "最受不了異性哪個行為？", level: "Normal" },
-          { type: "truth", content: "曾經為了愛做過最傻的事？", level: "Hard" },
-          {
-            type: "truth",
-            content: "有沒有當過第三者（或被當過）？",
-            level: "Hard",
-          },
-          { type: "truth", content: "覺得性重要還是愛重要？", level: "Adult" },
-          {
-            type: "truth",
-            content: "喜歡被控制還是控制對方？",
-            level: "Adult",
-          },
-          {
-            type: "truth",
-            content: "曾經在夢裡夢過在場的人嗎？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "如果世界末日，只能救一個人，救誰？",
-            level: "Hard",
-          },
-          { type: "truth", content: "最想跟誰道歉？", level: "Hard" },
-          {
-            type: "truth",
-            content: "有沒有說過謊來逃避聚會？",
-            level: "Normal",
-          },
-          {
-            type: "truth",
-            content: "最近一個搜尋的關鍵字是什麼？",
-            level: "Normal",
-          },
-          { type: "truth", content: "覺得自己聰明嗎？", level: "Easy" },
-          { type: "truth", content: "最喜歡的一道菜？", level: "Easy" },
-          { type: "truth", content: "有沒有什麼怪癖？", level: "Normal" },
-          { type: "truth", content: "曾經被警察攔下來過嗎？", level: "Normal" },
-          { type: "truth", content: "最害怕的一種死法？", level: "Hard" },
-          { type: "truth", content: "覺得在場誰最單純？", level: "Normal" },
-          { type: "truth", content: "曾經偷拿過家裡的錢嗎？", level: "Normal" },
-          { type: "truth", content: "有沒有假裝高潮過？", level: "Adult" },
-          { type: "truth", content: "最喜歡的愛愛時間長度？", level: "Adult" },
-          { type: "truth", content: "曾經在車上做過嗎？", level: "Adult" },
-          { type: "truth", content: "喜歡穿丁字褲嗎？", level: "Adult" },
-          { type: "truth", content: "有沒有拍過私密照？", level: "Adult" },
-          { type: "truth", content: "曾經跟網友約炮過嗎？", level: "Adult" },
-          { type: "truth", content: "覺得自己的顏值幾分？", level: "Normal" },
-          { type: "dare", content: "模仿一種動物的求偶舞。", level: "Easy" },
-          { type: "dare", content: "用屁股寫「我愛你」。", level: "Easy" },
-          { type: "dare", content: "聞右邊人的襪子。", level: "Normal" },
-          { type: "dare", content: "讓左邊的人畫你的臉。", level: "Normal" },
-          {
-            type: "dare",
-            content: "對著窗外大喊「我是大笨蛋」。",
-            level: "Easy",
-          },
-          {
-            type: "dare",
-            content: "跟在場一位異性十指緊扣一分鐘。",
-            level: "Normal",
-          },
-          { type: "dare", content: "公主抱在場一位異性。", level: "Hard" },
-          {
-            type: "dare",
-            content: "伏地挺身10下（可以在人身上）。",
-            level: "Hard",
-          },
-          { type: "dare", content: "跳一段性感的舞蹈。", level: "Normal" },
-          {
-            type: "dare",
-            content: "用嘴巴咬下左邊人身上的便利貼。",
-            level: "Hard",
-          },
-          { type: "dare", content: "發出曖昧的聲音10秒。", level: "Adult" },
-          { type: "dare", content: "親吻右邊人的手背。", level: "Normal" },
-          {
-            type: "dare",
-            content: "讓大家看你手機裡最近的一張自拍。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "模仿在場一個人的說話方式。",
-            level: "Easy",
-          },
-          { type: "dare", content: "對著鏡子猜拳直到贏為止。", level: "Easy" },
-          { type: "dare", content: "喝一杯加了鹽的可樂。", level: "Hard" },
-          {
-            type: "dare",
-            content: "讓在場的人幫你綁頭髮（或弄亂）。",
-            level: "Easy",
-          },
-          { type: "dare", content: "跟牆壁深情告白30秒。", level: "Easy" },
-          { type: "dare", content: "模仿便秘時的表情。", level: "Easy" },
-          {
-            type: "dare",
-            content: "用舌頭舔手肘（舔不到也要試）。",
-            level: "Easy",
-          },
-          {
-            type: "dare",
-            content: "讓右邊的人坐在你背上做伏地挺身。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "跟左邊的人對視30秒不能笑。",
-            level: "Normal",
-          },
-          { type: "dare", content: "把頭像換成鬼臉照一天。", level: "Hard" },
-          {
-            type: "dare",
-            content: "傳訊息給第10個聯絡人說「借我錢」。",
-            level: "Hard",
-          },
-          {
-            type: "dare",
-            content: "大聲朗讀手機裡最新的一則訊息。",
-            level: "Normal",
-          },
-          {
-            type: "dare",
-            content: "用屁股撞擊在場所有人的屁股。",
-            level: "Normal",
-          },
-          { type: "dare", content: "模仿高潮的叫聲。", level: "Adult" },
-          { type: "dare", content: "對著異性做頂胯動作10下。", level: "Adult" },
-          { type: "dare", content: "讓異性摸你的腹肌/肚子。", level: "Adult" },
-          { type: "dare", content: "親吻異性的鎖骨。", level: "Adult" },
-          {
-            type: "dare",
-            content: "用嘴巴解開異性的一顆扣子。",
-            level: "Adult",
-          },
-          { type: "dare", content: "在異性耳邊吹氣。", level: "Adult" },
-          { type: "dare", content: "讓異性坐在你大腿上30秒。", level: "Adult" },
-          { type: "dare", content: "隔著衣服親吻異性的胸口。", level: "Adult" },
-          { type: "dare", content: "表演吃香蕉（或是手指）。", level: "Adult" },
-          { type: "dare", content: "讓異性幫你脫襪子。", level: "Adult" },
-          { type: "dare", content: "用嘴巴餵異性吃東西。", level: "Adult" },
-          { type: "dare", content: "躺在地上讓異性跨過去。", level: "Adult" },
-          {
-            type: "dare",
-            content: "模仿AV女優/男優的經典台詞。",
-            level: "Adult",
-          },
-          { type: "dare", content: "讓異性打你的屁股一下。", level: "Adult" },
-          {
-            type: "dare",
-            content: "握住異性的手放在自己胸口。",
-            level: "Adult",
-          },
-          { type: "dare", content: "跟異性磨鼻子10秒。", level: "Adult" },
-          {
-            type: "dare",
-            content: "用很色的語氣說「我要吃掉你」。",
-            level: "Adult",
-          },
-          {
-            type: "dare",
-            content: "讓異性檢查你的內衣/內褲顏色。",
-            level: "Adult",
-          },
-          { type: "dare", content: "對著異性跳M字腿。", level: "Adult" },
-          { type: "dare", content: "含著冰塊親吻異性的手。", level: "Adult" },
-          { type: "dare", content: "讓異性聞你的脖子。", level: "Adult" },
-          {
-            type: "dare",
-            content: "用領帶或皮帶輕輕綁住異性的手。",
-            level: "Adult",
-          },
+          ...QUESTIONS_EASY,
+          ...QUESTIONS_NORMAL,
+          ...QUESTIONS_HARD,
+          ...QUESTIONS_ADULT,
         ],
         state: {
           players: [],
@@ -2946,17 +1112,22 @@
       const WheelModule = {
         canvas: null,
         ctx: null,
+        pointerEl: null,
         segments: [],
         angleCurrent: 0,
         angleDelta: 0,
         isSpinning: false,
         spinTime: 0,
         spinTimeTotal: 0,
+        startTime: 0,
+        startAngle: 0,
+        targetAngle: 0,
         requestFrameId: null,
 
         init() {
           this.canvas = document.getElementById("wheelCanvas");
           this.ctx = this.canvas.getContext("2d");
+          this.pointerEl = document.querySelector(".pointer");
           this.generateSegments();
           this.draw();
         },
@@ -3056,29 +1227,56 @@
           }
 
           const speedMult = DataModule.state.settings.speed / 10;
-          this.spinTime = 0;
           this.spinTimeTotal =
             DataModule.state.settings.duration * (0.8 + Math.random() * 0.4);
-          this.angleDelta = (Math.random() * 10 + 20) * speedMult;
+          this.startTime = null;
+          this.startAngle = this.angleCurrent;
+
+          // 計算目標角度：基礎圈數 + 隨機圈數，使用 EaseOutQuart 模擬摩擦力
+          const rotations = (5 + Math.random() * 5) * speedMult;
+          const totalRadians = rotations * 2 * Math.PI;
+          this.targetAngle = this.startAngle + totalRadians;
+
           AudioModule.play("spin");
-          this.rotate();
+          this.requestFrameId = requestAnimationFrame(this.rotate.bind(this));
         },
-        rotate() {
-          this.spinTime += 30;
-          if (this.spinTime >= this.spinTimeTotal) {
+        rotate(timestamp) {
+          if (!this.startTime) this.startTime = timestamp;
+          const elapsed = timestamp - this.startTime;
+
+          if (elapsed >= this.spinTimeTotal) {
+            this.angleCurrent = this.targetAngle;
+            this.draw();
             this.stop();
             return;
           }
-          const spinAngle =
-            this.angleDelta -
-            this.angleDelta * (this.spinTime / this.spinTimeTotal);
-          this.angleCurrent += (spinAngle * Math.PI) / 180;
+
+          // 使用 EaseOutQuart (1 - (1-t)^4) 模擬摩擦力減速效果
+          const t = elapsed / this.spinTimeTotal;
+          const ease = 1 - Math.pow(1 - t, 4);
+          const newAngle =
+            this.startAngle + (this.targetAngle - this.startAngle) * ease;
+
+          // 計算速度並應用指針擺動動畫
+          const speed = newAngle - this.angleCurrent;
+          this.angleCurrent = newAngle;
+
+          if (this.pointerEl) {
+            const count = this.segments.length;
+            // 模擬指針撞擊格子的效果：sin波形 * 速度 * 強度係數
+            const wobble = Math.sin(this.angleCurrent * count) * speed * 150;
+            this.pointerEl.style.transform = `translateX(-50%) rotate(${wobble}deg)`;
+          }
+
           this.draw();
           this.requestFrameId = requestAnimationFrame(this.rotate.bind(this));
         },
         stop() {
           this.isSpinning = false;
           cancelAnimationFrame(this.requestFrameId);
+          if (this.pointerEl) {
+            this.pointerEl.style.transform = "translateX(-50%) rotate(0deg)";
+          }
           AudioModule.stop("spin");
           AudioModule.play("win");
 
@@ -3092,10 +1290,12 @@
           // 只有房主負責寫入結果與統計
           if (NetworkModule.isHost) {
             const player = DataModule.getRandomPlayer();
-            let content =
+            const qObj =
               result.type === "pass"
-                ? "直接跳過！"
-                : DataModule.getQuestionByType(result.type).content;
+                ? { content: "直接跳過！", level: "" }
+                : DataModule.getQuestionByType(result.type);
+            const content = qObj.content;
+            const level = qObj.level || "";
 
             DataModule.incrementStat(player);
             DataModule.addHistory({
@@ -3114,19 +1314,23 @@
                   type: result.type,
                   content,
                   player,
+                  level,
                   timestamp: firebase.database.ServerValue.TIMESTAMP,
                 },
                 nextSpinner: player,
               });
             }
-            UIModule.showResult(result.type, content, player);
+            UIModule.showResult(result.type, content, player, level);
           } else if (NetworkModule.roomId === "LOCAL") {
             // 單機模式
             const player = DataModule.getRandomPlayer();
-            let content =
+            const qObj =
               result.type === "pass"
-                ? "直接跳過！"
-                : DataModule.getQuestionByType(result.type).content;
+                ? { content: "直接跳過！", level: "" }
+                : DataModule.getQuestionByType(result.type);
+            const content = qObj.content;
+            const level = qObj.level || "";
+
             DataModule.incrementStat(player);
             DataModule.addHistory({
               player,
@@ -3137,7 +1341,7 @@
                 minute: "2-digit",
               }),
             });
-            UIModule.showResult(result.type, content, player);
+            UIModule.showResult(result.type, content, player, level);
           } else {
             // 訪客：只顯示特效，等待 Firebase 的 currentResult 同步內容
             EffectModule.triggerConfetti();
@@ -3145,7 +1349,8 @@
               UIModule.showResult(
                 NetworkModule.pendingResult.type,
                 NetworkModule.pendingResult.content,
-                NetworkModule.pendingResult.player
+                NetworkModule.pendingResult.player,
+                NetworkModule.pendingResult.level
               );
               NetworkModule.pendingResult = null;
             }
@@ -3213,9 +1418,21 @@
               const t = document.getElementById("range-truth").value;
               const d = document.getElementById("range-dare").value;
               const p = document.getElementById("range-pass").value;
-              document.getElementById("val-truth").innerText = t;
-              document.getElementById("val-dare").innerText = d;
-              document.getElementById("val-pass").innerText = p;
+
+              // Update bubbles
+              UIModule.updateBubble(
+                document.getElementById("range-truth"),
+                document.getElementById("val-truth")
+              );
+              UIModule.updateBubble(
+                document.getElementById("range-dare"),
+                document.getElementById("val-dare")
+              );
+              UIModule.updateBubble(
+                document.getElementById("range-pass"),
+                document.getElementById("val-pass")
+              );
+
               DataModule.state.settings.segmentCounts = {
                 truth: t,
                 dare: d,
@@ -3230,6 +1447,25 @@
             .getElementById("check-no-repeat")
             .addEventListener("change", (e) => {
               DataModule.state.settings.noRepeat = e.target.checked;
+              DataModule.updateSettings();
+            });
+          document
+            .getElementById("game-difficulty-filter")
+            .addEventListener("change", (e) => {
+              DataModule.state.settings.difficultyFilter = e.target.value;
+              DataModule.updateSettings();
+            });
+          document
+            .getElementById("speed-range")
+            .addEventListener("input", (e) => {
+              DataModule.state.settings.speed = parseInt(e.target.value);
+              DataModule.updateSettings();
+            });
+          document
+            .getElementById("duration-range")
+            .addEventListener("input", (e) => {
+              DataModule.state.settings.duration =
+                parseInt(e.target.value) * 1000;
               DataModule.updateSettings();
             });
           // Import/Export
@@ -3452,13 +1688,45 @@
           document.getElementById("range-pass").value = s.segmentCounts.pass;
           document.getElementById("speed-range").value = s.speed;
           document.getElementById("duration-range").value = s.duration / 1000;
+
+          // Update bubbles position on load/sync
+          this.updateBubble(
+            document.getElementById("range-truth"),
+            document.getElementById("val-truth")
+          );
+          this.updateBubble(
+            document.getElementById("range-dare"),
+            document.getElementById("val-dare")
+          );
+          this.updateBubble(
+            document.getElementById("range-pass"),
+            document.getElementById("val-pass")
+          );
+
           document.getElementById("game-difficulty-filter").value =
             s.difficultyFilter;
           document.getElementById("check-no-repeat").checked = !!s.noRepeat;
         },
-        showResult(type, content, player) {
+        updateBubble(range, bubble) {
+          const val = range.value;
+          const min = range.min ? parseInt(range.min) : 0;
+          const max = range.max ? parseInt(range.max) : 100;
+          const newVal = Number(((val - min) * 100) / (max - min));
+
+          bubble.innerText = val;
+          // 計算位置：(百分比 * (容器寬度 - 滑塊寬度)) + 半個滑塊寬度
+          // 這裡假設滑塊寬度約為 20px (CSS中設定)
+          bubble.style.left = `calc(${newVal}% + (${10 - newVal * 0.2}px))`;
+        },
+        showResult(type, content, player, level) {
           document.getElementById("player-name-slot").innerText = player;
           const box = document.getElementById("display-result");
+
+          // Reset classes and apply level class
+          box.className = "result-box";
+          if (level) {
+            box.classList.add("level-" + level.toLowerCase());
+          }
 
           let color = "#ccc";
           let grad = "rgba(0,0,0,0.6)";

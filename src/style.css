@@ -49,6 +49,39 @@ body::before {
   pointer-events: none;
 }
 
+/* Flash Overlay */
+#flash-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+}
+.flash-truth {
+  background: radial-gradient(
+    circle,
+    rgba(33, 150, 243, 0.6) 0%,
+    transparent 80%
+  );
+  animation: flash-anim 1s ease-out forwards;
+}
+.flash-dare {
+  background: radial-gradient(
+    circle,
+    rgba(244, 67, 54, 0.6) 0%,
+    transparent 80%
+  );
+  animation: flash-anim 1s ease-out forwards;
+}
+.flash-pass {
+  background: radial-gradient(
+    circle,
+    rgba(255, 215, 0, 0.6) 0%,
+    transparent 80%
+  );
+  animation: flash-anim 1s ease-out forwards;
+}
+
 /* =========================================
      Login Overlay (v2.0 Feature)
      ========================================= */
@@ -447,6 +480,18 @@ main {
   }
 }
 
+.reset-badge {
+  display: inline-block;
+  background: var(--gold);
+  color: #000;
+  font-size: 0.8rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 10px;
+  vertical-align: middle;
+  animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 .btn-main {
   background: linear-gradient(to bottom, var(--gold), var(--gold-dark));
   color: #000;
@@ -554,6 +599,24 @@ select {
 }
 .list-item.pass {
   border-left-color: #c0c0c0;
+}
+.list-item.used {
+  opacity: 0.6;
+  background: rgba(0, 0, 0, 0.2);
+}
+.list-item.used::after {
+  content: "已使用";
+  font-size: 0.7rem;
+  background: #444;
+  color: #aaa;
+  padding: 2px 5px;
+  border-radius: 3px;
+  margin-left: 10px;
+}
+.list-item.zero-weight {
+  opacity: 0.4;
+  filter: grayscale(1);
+  background: rgba(0, 0, 0, 0.3);
 }
 .list-item .tag {
   font-size: 0.7rem;
@@ -839,6 +902,47 @@ select {
 }
 .slider-container input[type="range"]:active::-webkit-slider-thumb {
   transform: scale(1.1);
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes flash-anim {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  25% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.05);
+  }
+  75% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes flash-anim {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
 }
 
 .slider-container select {

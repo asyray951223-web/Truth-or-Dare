@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>題庫重複檢查工具</title>
+    <!-- 引入題庫檔案 -->
+    <script src="questions_easy.js"></script>
+    <script src="questions_normal.js"></script>
+    <script src="questions_hard.js"></script>
+    <script src="questions_adult.js"></script>
+    <style>
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: #f4f4f9;
+        color: #333;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 30px;
+      }
+      .summary {
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        padding: 15px;
+        border-radius: 5px;
+        text-align: center;
+      }
+      .summary.good {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .summary.bad {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .duplicate-item {
+        background: #fff;
+        border: 1px solid #ddd;
+        margin-bottom: 15px;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      .duplicate-content {
+        font-weight: bold;
+        color: #d32f2f;
+        margin-bottom: 10px;
+        display: block;
+      }
+      .location-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        color: #fff;
+      }
+      .loc-Easy {
+        background: #69f0ae;
+        color: #004d40;
+      }
+      .loc-Normal {
+        background: #40c4ff;
+        color: #01579b;
+      }
+      .loc-Hard {
+        background: #ffd740;
+        color: #ff6f00;
+      }
+      .loc-Adult {
+        background: #e91e63;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>題庫重複內容檢查</h1>
+      <div id="result"></div>
+    </div>
+
+    <script>
+      function runCheck() {
+        // 收集所有題目
+        const databases = [
+          {
+            name: "Easy",
+            data: typeof QUESTIONS_EASY !== "undefined" ? QUESTIONS_EASY : [],
+          },
+          {
+            name: "Normal",
+            data:
+              typeof QUESTIONS_NORMAL !== "undefined" ? QUESTIONS_NORMAL : [],
+          },
+          {
+            name: "Hard",
+            data: typeof QUESTIONS_HARD !== "undefined" ? QUESTIONS_HARD : [],
+          },
+          {
+            name: "Adult",
+            data: typeof QUESTIONS_ADULT !== "undefined" ? QUESTIONS_ADULT : [],
+          },
+        ];
+
+        const contentMap = new Map();
+        let totalCount = 0;
+
+        // 遍歷並建立索引
+        databases.forEach((db) => {
+          db.data.forEach((q, index) => {
+            totalCount++;
+            const text = q.content.trim();
+            if (!contentMap.has(text)) {
+              contentMap.set(text, []);
+            }
+            contentMap.get(text).push({
+              level: db.name, // 來源檔案/等級
+              type: q.type,
+              index: index,
+              objLevel: q.level, // 題目物件內的 level 屬性
+            });
+          });
+        });
+
+        // 找出重複項
+        const duplicates = [];
+        contentMap.forEach((locations, content) => {
+          if (locations.length > 1) {
+            duplicates.push({ content, locations });
+          }
+        });
+
+        // 顯示結果
+        const resultDiv = document.getElementById("result");
+
+        if (duplicates.length === 0) {
+          resultDiv.innerHTML = `<div class="summary good">✅ 檢查完成！共掃描 ${totalCount} 題，未發現重複內容。</div>`;
+        } else {
+          let html = `<div class="summary bad">⚠️ 檢查完成！共掃描 ${totalCount} 題，發現 ${duplicates.length} 組重複內容。</div>`;
+
+          duplicates.forEach((dup) => {
+            let locHtml = "";
+            dup.locations.forEach((loc) => {
+              locHtml += `<span class="location-tag loc-${loc.level}">[${
+                loc.level
+              }] ${loc.type} #${loc.index + 1}</span>`;
+            });
+
+            html += `
+              <div class="duplicate-item">
+                <span class="duplicate-content">"${dup.content}"</span>
+                <div>${locHtml}</div>
+              </div>
+            `;
+          });
+
+          resultDiv.innerHTML = html;
+        }
+      }
+
+      // 執行檢查
+      runCheck();
+    </script>
+  </body>
+</html>

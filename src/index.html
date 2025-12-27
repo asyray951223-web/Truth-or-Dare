@@ -28,6 +28,7 @@
     <link href="style.css" rel="stylesheet" />
   </head>
   <body>
+    <div id="flash-overlay"></div>
     <div id="login-overlay">
       <div class="login-box">
         <div class="login-title">
@@ -108,6 +109,38 @@
       </div>
     </div>
 
+    <!-- Personal History Overlay -->
+    <div id="personal-history-overlay" class="modal-overlay hidden">
+      <div
+        class="modal-box"
+        style="max-height: 80vh; display: flex; flex-direction: column"
+      >
+        <div
+          style="
+            color: var(--gold);
+            margin-bottom: 10px;
+            font-weight: bold;
+            flex-shrink: 0;
+          "
+        >
+          我的已抽題目 (防重複記錄)
+        </div>
+        <div
+          id="personal-history-list"
+          class="list-container"
+          style="overflow-y: auto; flex: 1; text-align: left"
+        ></div>
+        <div style="margin-top: 10px; flex-shrink: 0">
+          <button
+            class="btn-small btn-danger"
+            onclick="document.getElementById('personal-history-overlay').classList.add('hidden')"
+          >
+            關閉
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="danmaku-layer"></div>
     <audio id="bgm" loop><source src="bgm.mp3" type="audio/mpeg" /></audio>
     <audio id="sfx-spin"><source src="spin.mp3" type="audio/mpeg" /></audio>
@@ -153,6 +186,18 @@
       <section id="panel-players" class="panel">
         <div class="section-title">
           <span>玩家名單 (<span id="player-count">0</span>)</span>
+          <button
+            id="reset-weights-btn"
+            class="btn-small btn-outline host-only"
+            style="font-size: 0.8rem"
+          >
+            <i
+              class="material-icons"
+              style="font-size: 1rem; vertical-align: middle"
+              >refresh</i
+            >
+            重置權重
+          </button>
         </div>
         <div class="input-group host-only">
           <input
@@ -163,6 +208,22 @@
           <button id="add-player-btn" class="btn-small">
             <i class="material-icons">add</i>
           </button>
+        </div>
+        <div
+          class="input-group host-only"
+          style="align-items: center; margin-bottom: 10px; margin-top: -10px"
+        >
+          <input
+            type="checkbox"
+            id="check-auto-reduce"
+            style="flex: 0; width: 20px; height: 20px; margin-right: 10px"
+          />
+          <label
+            for="check-auto-reduce"
+            style="color: #aaa; font-size: 0.9rem; cursor: pointer"
+          >
+            選中後自動降低權重 (避免連續)
+          </label>
         </div>
         <div id="player-list" class="list-container"></div>
       </section>
@@ -248,6 +309,13 @@
             >
               <i class="material-icons">delete_sweep</i> 清空
             </button>
+            <button
+              id="reset-used-btn"
+              class="btn-small btn-outline"
+              style="margin-right: 5px"
+            >
+              <i class="material-icons">replay</i> 重置已用
+            </button>
             <button id="ai-generate-btn" class="btn-small btn-ai">
               <i class="material-icons">auto_awesome</i> AI 產生
             </button>
@@ -298,9 +366,26 @@
       <section id="panel-history" class="panel">
         <div class="section-title">
           <span>歷史記錄</span>
-          <button id="clear-history-btn" class="btn-small btn-danger host-only">
-            清除
-          </button>
+          <div>
+            <button
+              id="btn-my-history"
+              class="btn-small btn-outline"
+              style="margin-right: 5px"
+            >
+              <i
+                class="material-icons"
+                style="font-size: 1rem; vertical-align: middle"
+                >assignment_ind</i
+              >
+              我的已抽
+            </button>
+            <button
+              id="clear-history-btn"
+              class="btn-small btn-danger host-only"
+            >
+              清除
+            </button>
+          </div>
         </div>
         <div id="history-list" class="list-container"></div>
       </section>
@@ -391,10 +476,42 @@
             justify-content: space-between;
           "
         >
-          <label style="margin: 0">防重複抽中 (No Repeat)</label>
+          <label style="margin: 0">玩家防重複 (No Repeat Players)</label>
           <input
             type="checkbox"
             id="check-no-repeat"
+            class="host-control"
+            style="width: 20px; height: 20px; margin: 0"
+          />
+        </div>
+        <div
+          class="slider-container"
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <label style="margin: 0">題目防重複 (No Repeat Questions)</label>
+          <input
+            type="checkbox"
+            id="check-no-repeat-q"
+            class="host-control"
+            style="width: 20px; height: 20px; margin: 0"
+          />
+        </div>
+        <div
+          class="slider-container"
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <label style="margin: 0">個人題目防重複 (No Repeat Personal)</label>
+          <input
+            type="checkbox"
+            id="check-no-repeat-personal"
             class="host-control"
             style="width: 20px; height: 20px; margin: 0"
           />
@@ -574,6 +691,8 @@
             questions: DataModule.state.questions, // Sync questions
             settings: DataModule.state.settings, // Sync settings
             history: [],
+            usedQuestions: [],
+            playerQuestionHistory: {},
             stats: {},
             nextSpinner: null,
           };
@@ -629,7 +748,7 @@
             playerRef.set({
               name: this.nickname,
               isHost: this.isHost,
-              weight: 1,
+              weight: 50,
             });
             playerRef.onDisconnect().remove();
 
@@ -665,7 +784,7 @@
             const serverPlayersList = Object.values(serverPlayersObj).map(
               (p) => ({
                 name: p.name,
-                weight: p.weight !== undefined ? p.weight : 1,
+                weight: p.weight !== undefined ? p.weight : 50,
               })
             );
 
@@ -700,6 +819,23 @@
             if (val.history) {
               DataModule.state.history = val.history;
               UIModule.renderHistory();
+            }
+
+            // Sync Used Questions
+            if (val.usedQuestions) {
+              DataModule.state.usedQuestions = val.usedQuestions;
+              UIModule.renderQuestionList();
+            } else if (val && !val.usedQuestions) {
+              DataModule.state.usedQuestions = [];
+              UIModule.renderQuestionList();
+            }
+
+            // Sync Player Question History
+            if (val.playerQuestionHistory) {
+              DataModule.state.playerQuestionHistory =
+                val.playerQuestionHistory;
+            } else if (val && !val.playerQuestionHistory) {
+              DataModule.state.playerQuestionHistory = {};
             }
 
             // Sync Stats
@@ -743,7 +879,8 @@
                   val.currentResult.type,
                   val.currentResult.content,
                   val.currentResult.player,
-                  val.currentResult.level
+                  val.currentResult.level,
+                  val.currentResult.isReset
                 );
               }
             }
@@ -831,6 +968,8 @@
           players: [],
           questions: [],
           history: [],
+          usedQuestions: [],
+          playerQuestionHistory: {},
           stats: {},
           settings: {
             speed: 30,
@@ -838,6 +977,9 @@
             difficultyFilter: "All",
             segmentCounts: { truth: 10, dare: 10, pass: 2 },
             noRepeat: false,
+            noRepeatQuestions: false,
+            noRepeatPersonal: false,
+            autoReduceWeight: false,
           },
         },
         tempSelected: [],
@@ -861,12 +1003,21 @@
             ) {
               this.state.players = this.state.players.map((name) => ({
                 name,
-                weight: 1,
+                weight: 50,
               }));
             }
             // Migration for noRepeat
             if (this.state.settings.noRepeat === undefined) {
               this.state.settings.noRepeat = false;
+            }
+            if (this.state.settings.noRepeatQuestions === undefined) {
+              this.state.settings.noRepeatQuestions = false;
+            }
+            if (this.state.settings.autoReduceWeight === undefined) {
+              this.state.settings.autoReduceWeight = false;
+            }
+            if (this.state.settings.noRepeatPersonal === undefined) {
+              this.state.settings.noRepeatPersonal = false;
             }
           }
         },
@@ -888,11 +1039,11 @@
             const safeName = name.replace(/[.$#\[\]\/]/g, "_");
             NetworkModule.roomRef
               .child("players/" + safeName)
-              .set({ name: name, isHost: false, weight: 1 });
+              .set({ name: name, isHost: false, weight: 50 });
             return true;
           } else if (!this.state.players.some((p) => p.name === name)) {
             // 單機模式
-            this.state.players.push({ name: name, weight: 1 });
+            this.state.players.push({ name: name, weight: 50 });
             this.saveToStorage();
             UIModule.renderPlayerList();
             return true;
@@ -931,6 +1082,24 @@
             this.saveToStorage();
           }
         },
+        resetAllWeights() {
+          if (NetworkModule.roomId !== "LOCAL") {
+            // 線上模式：建立多路徑更新以一次性重置所有玩家權重
+            const updates = {};
+            this.state.players.forEach((p) => {
+              const safeName = p.name.replace(/[.$#\[\]\/]/g, "_");
+              updates["players/" + safeName + "/weight"] = 50;
+            });
+            if (Object.keys(updates).length > 0) {
+              NetworkModule.roomRef.update(updates);
+            }
+          } else {
+            // 單機模式
+            this.state.players.forEach((p) => (p.weight = 50));
+            this.saveToStorage();
+            UIModule.renderPlayerList();
+          }
+        },
         addQuestion(q) {
           this.state.questions.push(q);
           this.saveToStorage();
@@ -960,6 +1129,58 @@
           this.saveToStorage();
           NetworkModule.pushUpdate("history", this.state.history);
         },
+        markQuestionAsUsed(content) {
+          if (!this.state.usedQuestions) this.state.usedQuestions = [];
+          this.state.usedQuestions.push(content);
+          this.saveToStorage();
+          NetworkModule.pushUpdate("usedQuestions", this.state.usedQuestions);
+        },
+        resetUsedQuestions() {
+          this.state.usedQuestions = [];
+          this.saveToStorage();
+          NetworkModule.pushUpdate("usedQuestions", this.state.usedQuestions);
+        },
+        markQuestionAsUsedByPlayer(player, content) {
+          if (!this.state.playerQuestionHistory)
+            this.state.playerQuestionHistory = {};
+          if (!this.state.playerQuestionHistory[player])
+            this.state.playerQuestionHistory[player] = [];
+          this.state.playerQuestionHistory[player].push(content);
+          this.saveToStorage();
+          NetworkModule.pushUpdate(
+            "playerQuestionHistory",
+            this.state.playerQuestionHistory
+          );
+        },
+        resetPersonalHistory(player) {
+          if (
+            this.state.playerQuestionHistory &&
+            this.state.playerQuestionHistory[player]
+          ) {
+            this.state.playerQuestionHistory[player] = [];
+            this.saveToStorage();
+            NetworkModule.pushUpdate(
+              "playerQuestionHistory",
+              this.state.playerQuestionHistory
+            );
+          }
+        },
+        removePersonalHistoryItem(player, index) {
+          if (
+            this.state.playerQuestionHistory &&
+            this.state.playerQuestionHistory[player]
+          ) {
+            this.state.playerQuestionHistory[player].splice(index, 1);
+            this.saveToStorage();
+            NetworkModule.pushUpdate(
+              "playerQuestionHistory",
+              this.state.playerQuestionHistory
+            );
+            if (player === NetworkModule.nickname) {
+              UIModule.showPersonalHistory();
+            }
+          }
+        },
         incrementStat(name) {
           if (!this.state.stats) this.state.stats = {};
           this.state.stats[name] = (this.state.stats[name] || 0) + 1;
@@ -977,7 +1198,7 @@
         },
 
         // Helpers
-        getQuestionByType(type) {
+        getQuestionByType(type, player) {
           let filtered = this.state.questions.filter((q) => q.type === type);
           const filterLevel = this.state.settings.difficultyFilter;
 
@@ -998,8 +1219,87 @@
           }
           // "All" returns everything
 
+          // No Repeat Logic for Questions
+          let wasReset = false;
+          if (this.state.settings.noRepeatQuestions && filtered.length > 0) {
+            const available = filtered.filter(
+              (q) => !this.state.usedQuestions.includes(q.content)
+            );
+            if (available.length === 0) {
+              let reset = false;
+              if (NetworkModule.isHost) {
+                if (
+                  confirm(
+                    "此類別/等級的題目已全部抽完！\n是否要重置「已使用題目」記錄並重新抽取？"
+                  )
+                ) {
+                  this.resetUsedQuestions();
+                  reset = true;
+                  wasReset = true;
+                }
+              }
+              if (!reset) {
+                return {
+                  content: "此類別題目已全部抽完！請重置或關閉防重複。",
+                  level: "",
+                };
+              }
+            } else {
+              filtered = available;
+            }
+          }
+
+          // Personal No Repeat Logic
+          if (
+            this.state.settings.noRepeatPersonal &&
+            player &&
+            filtered.length > 0
+          ) {
+            const history = this.state.playerQuestionHistory || {};
+            const playerHistory = history[player] || [];
+            const available = filtered.filter(
+              (q) => !playerHistory.includes(q.content)
+            );
+
+            if (available.length === 0) {
+              let reset = false;
+              if (NetworkModule.isHost) {
+                if (
+                  confirm(
+                    `玩家 ${player} 的此類別/等級題目已全部抽完！\n是否重置該玩家的「已抽過題目」記錄並重新抽取？`
+                  )
+                ) {
+                  this.resetPersonalHistory(player);
+                  reset = true;
+                  wasReset = true;
+                }
+              }
+              if (!reset) {
+                return {
+                  content: `玩家 ${player} 的題目已全部抽完！`,
+                  level: "",
+                };
+              }
+            } else {
+              filtered = available;
+            }
+          }
+
           if (filtered.length === 0) return { content: "無符合條件的題目" };
-          return filtered[Math.floor(Math.random() * filtered.length)];
+
+          const selected =
+            filtered[Math.floor(Math.random() * filtered.length)];
+
+          // Mark as used if setting is enabled
+          if (this.state.settings.noRepeatQuestions) {
+            this.markQuestionAsUsed(selected.content);
+          }
+
+          if (this.state.settings.noRepeatPersonal && player) {
+            this.markQuestionAsUsedByPlayer(player, selected.content);
+          }
+
+          return { ...selected, isReset: wasReset };
         },
         getRandomPlayer() {
           if (this.state.players.length === 0) return "匿名玩家";
@@ -1090,7 +1390,7 @@
               ) {
                 data.players = data.players.map((name) => ({
                   name,
-                  weight: 1,
+                  weight: 50,
                 }));
               }
               this.state = data;
@@ -1251,9 +1551,15 @@
             return;
           }
 
-          // 使用 EaseOutQuart (1 - (1-t)^4) 模擬摩擦力減速效果
           const t = elapsed / this.spinTimeTotal;
-          const ease = 1 - Math.pow(1 - t, 4);
+
+          // 優化：使用帶有回彈效果的緩動函數 (Modified EaseOutBack)
+          // 模擬重輪盤的摩擦力與最後的物理回彈
+          const ts = t - 1;
+          const recoil = 0.2; // 回彈係數，數值越大回彈越明顯
+          const ease =
+            1 + ((recoil + 1) * Math.pow(ts, 3) + recoil * Math.pow(ts, 2));
+
           const newAngle =
             this.startAngle + (this.targetAngle - this.startAngle) * ease;
 
@@ -1264,7 +1570,7 @@
           if (this.pointerEl) {
             const count = this.segments.length;
             // 模擬指針撞擊格子的效果：sin波形 * 速度 * 強度係數
-            const wobble = Math.sin(this.angleCurrent * count) * speed * 150;
+            const wobble = Math.sin(this.angleCurrent * count) * speed * 200;
             this.pointerEl.style.transform = `translateX(-50%) rotate(${wobble}deg)`;
           }
 
@@ -1290,18 +1596,36 @@
           // 只有房主負責寫入結果與統計
           if (NetworkModule.isHost) {
             const player = DataModule.getRandomPlayer();
+
+            // Auto Reduce Weight Logic
+            if (DataModule.state.settings.autoReduceWeight) {
+              const pIndex = DataModule.state.players.findIndex(
+                (p) => p.name === player
+              );
+              if (pIndex !== -1) {
+                const currentW =
+                  DataModule.state.players[pIndex].weight !== undefined
+                    ? DataModule.state.players[pIndex].weight
+                    : 50;
+                if (currentW > 0)
+                  DataModule.updatePlayerWeight(pIndex, currentW - 1);
+              }
+            }
+
             const qObj =
               result.type === "pass"
-                ? { content: "直接跳過！", level: "" }
-                : DataModule.getQuestionByType(result.type);
+                ? { content: "直接跳過！", level: "", isReset: false }
+                : DataModule.getQuestionByType(result.type, player);
             const content = qObj.content;
             const level = qObj.level || "";
+            const isReset = qObj.isReset || false;
 
             DataModule.incrementStat(player);
             DataModule.addHistory({
               player,
               type: result.type,
               content,
+              isReset,
               time: new Date().toLocaleTimeString("en-GB", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -1315,33 +1639,52 @@
                   content,
                   player,
                   level,
+                  isReset,
                   timestamp: firebase.database.ServerValue.TIMESTAMP,
                 },
                 nextSpinner: player,
               });
             }
-            UIModule.showResult(result.type, content, player, level);
+            UIModule.showResult(result.type, content, player, level, isReset);
           } else if (NetworkModule.roomId === "LOCAL") {
             // 單機模式
             const player = DataModule.getRandomPlayer();
+
+            // Auto Reduce Weight Logic
+            if (DataModule.state.settings.autoReduceWeight) {
+              const pIndex = DataModule.state.players.findIndex(
+                (p) => p.name === player
+              );
+              if (pIndex !== -1) {
+                const currentW =
+                  DataModule.state.players[pIndex].weight !== undefined
+                    ? DataModule.state.players[pIndex].weight
+                    : 50;
+                if (currentW > 0)
+                  DataModule.updatePlayerWeight(pIndex, currentW - 1);
+              }
+            }
+
             const qObj =
               result.type === "pass"
-                ? { content: "直接跳過！", level: "" }
-                : DataModule.getQuestionByType(result.type);
+                ? { content: "直接跳過！", level: "", isReset: false }
+                : DataModule.getQuestionByType(result.type, player);
             const content = qObj.content;
             const level = qObj.level || "";
+            const isReset = qObj.isReset || false;
 
             DataModule.incrementStat(player);
             DataModule.addHistory({
               player,
               type: result.type,
               content,
+              isReset,
               time: new Date().toLocaleTimeString("en-GB", {
                 hour: "2-digit",
                 minute: "2-digit",
               }),
             });
-            UIModule.showResult(result.type, content, player, level);
+            UIModule.showResult(result.type, content, player, level, isReset);
           } else {
             // 訪客：只顯示特效，等待 Firebase 的 currentResult 同步內容
             EffectModule.triggerConfetti();
@@ -1350,7 +1693,8 @@
                 NetworkModule.pendingResult.type,
                 NetworkModule.pendingResult.content,
                 NetworkModule.pendingResult.player,
-                NetworkModule.pendingResult.level
+                NetworkModule.pendingResult.level,
+                NetworkModule.pendingResult.isReset
               );
               NetworkModule.pendingResult = null;
             }
@@ -1386,6 +1730,18 @@
                 input.value = "";
               }
             });
+          document
+            .getElementById("check-auto-reduce")
+            .addEventListener("change", (e) => {
+              DataModule.state.settings.autoReduceWeight = e.target.checked;
+              DataModule.updateSettings();
+            });
+          document
+            .getElementById("reset-weights-btn")
+            .addEventListener("click", () => {
+              if (confirm("確定要將所有玩家的權重重置為 50 嗎？"))
+                DataModule.resetAllWeights();
+            });
           document.getElementById("add-q-btn").addEventListener("click", () => {
             const input = document.getElementById("new-q-input");
             if (input.value) {
@@ -1403,8 +1759,19 @@
               if (confirm("清空?")) DataModule.clearQuestions();
             });
           document
+            .getElementById("reset-used-btn")
+            .addEventListener("click", () => {
+              if (confirm("確定要重置所有已使用的題目嗎？"))
+                DataModule.resetUsedQuestions();
+            });
+          document
             .getElementById("ai-generate-btn")
             .addEventListener("click", () => DataModule.aiGenerate());
+          document
+            .getElementById("btn-my-history")
+            .addEventListener("click", () => {
+              UIModule.showPersonalHistory();
+            });
           document
             .getElementById("clear-history-btn")
             .addEventListener("click", () => DataModule.clearHistory());
@@ -1447,6 +1814,18 @@
             .getElementById("check-no-repeat")
             .addEventListener("change", (e) => {
               DataModule.state.settings.noRepeat = e.target.checked;
+              DataModule.updateSettings();
+            });
+          document
+            .getElementById("check-no-repeat-q")
+            .addEventListener("change", (e) => {
+              DataModule.state.settings.noRepeatQuestions = e.target.checked;
+              DataModule.updateSettings();
+            });
+          document
+            .getElementById("check-no-repeat-personal")
+            .addEventListener("change", (e) => {
+              DataModule.state.settings.noRepeatPersonal = e.target.checked;
               DataModule.updateSettings();
             });
           document
@@ -1603,13 +1982,15 @@
           let html = "";
           DataModule.state.players.forEach((p, i) => {
             const isHost = NetworkModule.isHost;
-            const weight = p.weight !== undefined ? p.weight : 1;
+            const weight = p.weight !== undefined ? p.weight : 50;
+            const zeroClass = weight === 0 ? "zero-weight" : "";
+
             const weightInput = isHost
               ? `<div style="display:flex; align-items:center; margin-right:5px" onclick="event.stopPropagation()">
-                   <input type="range" style="width:80px; accent-color:var(--gold); margin-right:5px; cursor:pointer; padding:0" value="${weight}" min="0" max="10" 
+                   <input type="range" style="width:80px; accent-color:var(--gold); margin-right:5px; cursor:pointer; padding:0" value="${weight}" min="0" max="100" 
                    oninput="document.getElementById('w-val-${i}').innerText=this.value" 
                    onchange="DataModule.updatePlayerWeight(${i}, this.value)">
-                   <span id="w-val-${i}" style="width:20px; text-align:center; color:var(--gold); font-weight:bold">${weight}</span>
+                   <span id="w-val-${i}" style="width:30px; text-align:center; color:var(--gold); font-weight:bold">${weight}</span>
                  </div>`
               : `<span style="font-size:0.8rem; color:#888; margin-right:5px">權重: ${weight}</span>`;
 
@@ -1617,7 +1998,7 @@
               ? `<button class="delete-btn" onclick="DataModule.removePlayer(${i})"><i class="material-icons">delete</i></button>`
               : "";
 
-            html += `<div class="list-item">
+            html += `<div class="list-item ${zeroClass}">
                 <div style="display:flex; align-items:center; flex:1">
                     <i class="material-icons" style="font-size:16px; margin-right:5px">person</i> 
                     <span>${p.name}</span>
@@ -1635,6 +2016,7 @@
           const levelFilter = document.getElementById(
             "list-difficulty-filter"
           ).value;
+          const usedList = DataModule.state.usedQuestions || [];
 
           list.innerHTML = "";
           DataModule.state.questions.forEach((q, i) => {
@@ -1645,13 +2027,16 @@
               return;
             if (levelFilter !== "all" && q.level !== levelFilter) return;
 
+            const isUsed = usedList.includes(q.content);
+            const usedClass = isUsed ? "used" : "";
+
             // Simplified render
             const delBtn = NetworkModule.isHost
               ? `<button class="delete-btn" onclick="DataModule.removeQuestion(${i})"><i class="material-icons">delete</i></button>`
               : "";
             list.innerHTML += `<div class="list-item ${
               q.type === "truth" ? "truth" : "dare"
-            }"><div><span class="tag">${q.type}</span>${
+            } ${usedClass}"><div><span class="tag">${q.type}</span>${
               q.content
             }</div>${delBtn}</div>`;
           });
@@ -1660,8 +2045,31 @@
           const list = document.getElementById("history-list");
           list.innerHTML = "";
           DataModule.state.history.forEach((h) => {
-            list.innerHTML += `<div class="list-item ${h.type}"><div><div style="color:var(--gold)">${h.player}</div>${h.content} <span style="font-size:0.7rem; color:#666">${h.time}</span></div></div>`;
+            const resetBadge = h.isReset
+              ? `<span class="reset-badge" style="font-size:0.6rem; padding:1px 4px; margin-left:5px; animation:none">♻️</span>`
+              : "";
+            list.innerHTML += `<div class="list-item ${h.type}"><div><div style="color:var(--gold)">${h.player}</div>${h.content}${resetBadge} <span style="font-size:0.7rem; color:#666">${h.time}</span></div></div>`;
           });
+        },
+        showPersonalHistory() {
+          const player = NetworkModule.nickname;
+          const history = DataModule.state.playerQuestionHistory || {};
+          const list = history[player] || [];
+          const container = document.getElementById("personal-history-list");
+
+          container.innerHTML = "";
+          if (list.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:#888; padding:20px">尚無記錄</div>`;
+          } else {
+            list.forEach((content, i) => {
+              container.innerHTML += `<div class="list-item used"><div style="flex:1"><span class="tag" style="background:#666">#${
+                i + 1
+              }</span>${content}</div><button class="delete-btn" onclick="DataModule.removePersonalHistoryItem(NetworkModule.nickname, ${i})"><i class="material-icons">delete</i></button></div>`;
+            });
+          }
+          document
+            .getElementById("personal-history-overlay")
+            .classList.remove("hidden");
         },
         renderLeaderboard() {
           const list = document.getElementById("leaderboard-list");
@@ -1706,6 +2114,12 @@
           document.getElementById("game-difficulty-filter").value =
             s.difficultyFilter;
           document.getElementById("check-no-repeat").checked = !!s.noRepeat;
+          document.getElementById("check-no-repeat-q").checked =
+            !!s.noRepeatQuestions;
+          document.getElementById("check-no-repeat-personal").checked =
+            !!s.noRepeatPersonal;
+          document.getElementById("check-auto-reduce").checked =
+            !!s.autoReduceWeight;
         },
         updateBubble(range, bubble) {
           const val = range.value;
@@ -1718,7 +2132,7 @@
           // 這裡假設滑塊寬度約為 20px (CSS中設定)
           bubble.style.left = `calc(${newVal}% + (${10 - newVal * 0.2}px))`;
         },
-        showResult(type, content, player, level) {
+        showResult(type, content, player, level, isReset) {
           document.getElementById("player-name-slot").innerText = player;
           const box = document.getElementById("display-result");
 
@@ -1750,7 +2164,12 @@
           document.querySelector(".game-info").style.background = grad;
           box.innerHTML = `<span style="color:${color}">[${type.toUpperCase()}]</span> ${content}`;
 
+          if (isReset) {
+            box.innerHTML += `<span class="reset-badge">♻️ 重新洗牌</span>`;
+          }
+
           EffectModule.triggerConfetti();
+          EffectModule.flash(type);
         },
         showRoomQR() {
           if (NetworkModule.roomId && NetworkModule.roomId !== "LOCAL") {
@@ -1798,6 +2217,16 @@
             origin: { y: 0.6 },
             colors: colors,
           });
+        },
+        flash(type) {
+          const overlay = document.getElementById("flash-overlay");
+          // Reset animation
+          overlay.className = "";
+          void overlay.offsetWidth; // Trigger reflow
+
+          if (type === "truth") overlay.classList.add("flash-truth");
+          else if (type === "dare") overlay.classList.add("flash-dare");
+          else if (type === "pass") overlay.classList.add("flash-pass");
         },
       };
 

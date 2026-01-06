@@ -26,6 +26,62 @@
     <script src="questions_hard.js"></script>
     <script src="questions_adult.js"></script>
     <link href="style.css" rel="stylesheet" />
+    <style>
+      /* Light Mode Styles */
+      body.light-mode {
+        background-color: #f5f7fa;
+        color: #2c3e50;
+      }
+      body.light-mode header {
+        background-color: #ffffff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      body.light-mode header h1 {
+        color: #2c3e50;
+      }
+      body.light-mode nav {
+        background-color: #ffffff;
+        border-top: 1px solid #e1e4e8;
+      }
+      body.light-mode .nav-btn {
+        color: #7f8c8d;
+      }
+      body.light-mode .nav-btn.active {
+        color: #d4af37;
+        background-color: #fdfbf0;
+      }
+      body.light-mode .panel {
+        background-color: #ffffff;
+        border: 1px solid #e1e4e8;
+      }
+      body.light-mode .list-item {
+        background-color: #ffffff;
+        border-bottom: 1px solid #f0f0f0;
+        color: #2c3e50;
+      }
+      body.light-mode input[type="text"],
+      body.light-mode select {
+        background-color: #ffffff;
+        border: 1px solid #ced4da;
+        color: #495057;
+      }
+      body.light-mode .login-box {
+        background-color: #ffffff;
+        color: #2c3e50;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      }
+      body.light-mode .login-title {
+        color: #2c3e50;
+      }
+      body.light-mode .modal-box {
+        background-color: #ffffff;
+        color: #2c3e50;
+      }
+      body.light-mode .btn-outline {
+        border-color: #2c3e50;
+        color: #2c3e50;
+      }
+    </style>
   </head>
   <body>
     <div id="flash-overlay"></div>
@@ -321,6 +377,23 @@
             </button>
           </div>
         </div>
+        <div
+          style="
+            background: rgba(255, 152, 0, 0.15);
+            border: 1px solid #ff9800;
+            color: #ff9800;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <i class="material-icons" style="margin-right: 5px">warning</i>
+          題目皆為AI生成
+        </div>
         <div class="difficulty-tabs" id="diff-selector">
           <div class="diff-tab active" data-val="all">全部</div>
           <div class="diff-tab" data-val="truth">真心話</div>
@@ -335,6 +408,18 @@
           <button id="add-q-btn" class="btn-small">
             <i class="material-icons">add</i>
           </button>
+        </div>
+        <div class="input-group" style="margin-top: 10px">
+          <i
+            class="material-icons"
+            style="color: #888; align-self: center; margin-right: 5px"
+            >search</i
+          >
+          <input
+            type="text"
+            id="q-search-input"
+            placeholder="搜尋題目關鍵字..."
+          />
         </div>
         <div
           class="input-group input-group--options"
@@ -516,6 +601,16 @@
             style="width: 20px; height: 20px; margin: 0"
           />
         </div>
+
+        <div class="section-title" style="margin-top: 30px">外觀設定</div>
+        <button
+          id="btn-theme-toggle"
+          class="btn-small"
+          style="width: 100%; margin-top: 10px"
+          onclick="ThemeModule.toggle()"
+        >
+          <i class="material-icons">light_mode</i> 切換淺色模式
+        </button>
 
         <div class="section-title host-only" style="margin-top: 30px">
           資料備份
@@ -1899,6 +1994,11 @@
             .addEventListener("change", () => {
               UIModule.renderQuestionList();
             });
+          document
+            .getElementById("q-search-input")
+            .addEventListener("input", () => {
+              UIModule.renderQuestionList();
+            });
 
           // Keyboard
           document.addEventListener("keydown", (e) => {
@@ -2016,6 +2116,10 @@
           const levelFilter = document.getElementById(
             "list-difficulty-filter"
           ).value;
+          const searchTerm = document
+            .getElementById("q-search-input")
+            .value.trim()
+            .toLowerCase();
           const usedList = DataModule.state.usedQuestions || [];
 
           list.innerHTML = "";
@@ -2026,6 +2130,8 @@
             )
               return;
             if (levelFilter !== "all" && q.level !== levelFilter) return;
+            if (searchTerm && !q.content.toLowerCase().includes(searchTerm))
+              return;
 
             const isUsed = usedList.includes(q.content);
             const usedClass = isUsed ? "used" : "";
@@ -2383,10 +2489,36 @@
         },
       };
 
+      const ThemeModule = {
+        init() {
+          const saved = localStorage.getItem("theme");
+          if (saved === "light") {
+            document.body.classList.add("light-mode");
+          }
+          this.updateBtnText();
+        },
+        toggle() {
+          document.body.classList.toggle("light-mode");
+          const isLight = document.body.classList.contains("light-mode");
+          localStorage.setItem("theme", isLight ? "light" : "dark");
+          this.updateBtnText();
+        },
+        updateBtnText() {
+          const btn = document.getElementById("btn-theme-toggle");
+          if (btn) {
+            const isLight = document.body.classList.contains("light-mode");
+            btn.innerHTML = isLight
+              ? '<i class="material-icons">dark_mode</i> 切換深色模式'
+              : '<i class="material-icons">light_mode</i> 切換淺色模式';
+          }
+        },
+      };
+
       window.onload = () => {
         DataModule.init();
         UIModule.init();
         TimerModule.init();
+        ThemeModule.init();
       };
     </script>
   </body>

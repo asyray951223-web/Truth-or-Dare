@@ -150,6 +150,35 @@ const NetworkModule = {
         UIModule.renderPlayerList();
       }
 
+      // Host Migration Logic
+      if (val.host) {
+        // Update local isHost status
+        const amIHost = val.host === this.nickname;
+        if (this.isHost !== amIHost) {
+          this.isHost = amIHost;
+          UIModule.updateRoleUI();
+          if (this.isHost) {
+            const safeName = this.nickname.replace(/[.$#\[\]\/]/g, "_");
+            this.roomRef.child("players/" + safeName).update({ isHost: true });
+          }
+        }
+
+        // Check if host is missing
+        const hostExists = Object.values(serverPlayersObj).some(
+          (p) => p.name === val.host
+        );
+        if (!hostExists) {
+          const playerKeys = Object.keys(serverPlayersObj).sort();
+          if (playerKeys.length > 0) {
+            const nextHostKey = playerKeys[0];
+            const nextHostObj = serverPlayersObj[nextHostKey];
+            if (nextHostObj && nextHostObj.name === this.nickname) {
+              this.roomRef.update({ host: this.nickname });
+            }
+          }
+        }
+      }
+
       // Sync Questions
       const serverQuestions = val.questions || [];
       if (
